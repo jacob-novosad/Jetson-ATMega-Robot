@@ -8,7 +8,6 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-
 volatile long encoderCounts[] = {0,0,0};
 bool motorDir[3] = {FORWARD,FORWARD,FORWARD};
 
@@ -16,6 +15,7 @@ const int motorPWMPins[3]            = {8,10,9};
 const int motorDirPins[3]            = {29,28,27};
 const int ultrasonicSensorTrigPins[] = {30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {31,33,35,37,39,41};
+const int infraredSensorPins[] = {0,1,2,3};
 //const int infaredSensorPins
 char rcv_buffer[64];
 void motor(int,int,bool);
@@ -23,7 +23,7 @@ void motor(int,int,bool);
 
 void setup() {
   
-  Serial.begin(1000000);
+  Serial.begin(115200);
   for(int i =0;i<6;i++)
   {
    pinMode(ultrasonicSensorTrigPins[i], OUTPUT);
@@ -48,10 +48,10 @@ void setup() {
   pinMode(motorDirPins[2], OUTPUT);
   buffer_Flush(rcv_buffer);
   while (! Serial);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_0INTERRUPT_PIN),encoder0_ISR,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_1INTERRUPT_PIN),encoder1_ISR,CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_1INTERRUPT_PIN),encoder2_ISR,CHANGE);
-  
+ attachInterrupt(18,encoder0_ISR,CHANGE);
+ attachInterrupt(19,encoder1_ISR,CHANGE);
+ attachInterrupt(20,encoder2_ISR,CHANGE);
+//  
 }
 
 void loop() {
@@ -159,7 +159,8 @@ void parseCommand()
 {
     char command = rcv_buffer[0];
 
-    
+    //uint16_t value = analogRead(INFRARED_SENSOR_0);
+        //  double distance = get_IR(value);
     
     switch(command)
     {
@@ -206,9 +207,14 @@ void parseCommand()
 
         case 'i':
         case 'I':
-          uint16_t value = analogRead(INFRARED_SENSOR_0);
-          double distance = get_IR(value);
-          Serial.println (value);  //Print the data to the arduino serial monitor
+          uint16_t value;
+          int infraredNumber;
+          double distance;
+        
+          sscanf(&rcv_buffer[1], " %d \r",&ultrasonicNumber);
+          value = analogRead(ultrasonicNumber);
+          distance = get_IR(value);
+          
           Serial.print (distance);
           Serial.println (" cm");
           Serial.println ();
