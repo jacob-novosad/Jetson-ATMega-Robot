@@ -1,6 +1,6 @@
-#define ENCODER_0INTERRUPT_PIN 18 // pin that interrupts on both rising and falling of A and B channels of encoder
-#define ENCODER_1INTERRUPT_PIN 19
-#define ENCODER_2INTERRUPT_PIN 20
+#define ENCODER_0INTERRUPT_PIN 5// pin that interrupts on both rising and falling of A and B channels of encoder
+#define ENCODER_1INTERRUPT_PIN 4 // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/ to see the encoder pin number
+#define ENCODER_2INTERRUPT_PIN 3
 
 #define FORWARD 0
 #define BACKWARDS 1
@@ -8,7 +8,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-volatile long encoderCounts[] = {0,0,0};
+volatile int64_t encoderCounts[] = {0,0,0};
 bool motorDir[3] = {FORWARD,FORWARD,FORWARD};
 
 const int motorPWMPins[3]            = {8,10,9};
@@ -18,6 +18,7 @@ const int ultrasonicSensorEchoPins[] = {31,33,35,37,39,41};
 const int infraredSensorPins[] = {0,1,2,3};
 //const int infaredSensorPins
 char rcv_buffer[64];
+char TXBuffer[64];
 void motor(int,int,bool);
 
 
@@ -47,10 +48,13 @@ void setup() {
   pinMode(motorPWMPins[2], OUTPUT);
   pinMode(motorDirPins[2], OUTPUT);
   buffer_Flush(rcv_buffer);
+  pinMode(2,INPUT_PULLUP);
+  pinMode(19,INPUT_PULLUP);
+  pinMode(20,INPUT_PULLUP);
   while (! Serial);
- attachInterrupt(18,encoder0_ISR,CHANGE);
- attachInterrupt(19,encoder1_ISR,CHANGE);
- attachInterrupt(20,encoder2_ISR,CHANGE);
+ attachInterrupt(ENCODER_0INTERRUPT_PIN,encoder0_ISR,CHANGE);
+ attachInterrupt(ENCODER_1INTERRUPT_PIN,encoder1_ISR,CHANGE);
+ attachInterrupt(ENCODER_2INTERRUPT_PIN,encoder2_ISR,CHANGE);
 //  
 }
 
@@ -166,12 +170,11 @@ void parseCommand()
     {
       case 'E':
       case 'e':
-        Serial.print("Encoder 0: ");
-        Serial.println(encoderCounts[0]);
-        Serial.print("Encoder 1: ");
-        Serial.println(encoderCounts[1]);
-        Serial.print("Encoder 2: ");
-        Serial.println(encoderCounts[2]);
+        int encoderNum;
+        buffer_Flush(TXBuffer);
+        sscanf(&rcv_buffer[1], " %d \r",&encoderNum);
+        itoa(encoderCounts[encoderNum],TXBuffer,10);
+        Serial.print(TXBuffer);
         break;
       case 'M':
       case 'm':
