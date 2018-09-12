@@ -8,11 +8,11 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-volatile int64_t encoderCounts[] = {0,0,0}; // variables accesed inside of an interrupt need to be volatile
+volatile long encoderCounts[] = {0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {FORWARD,FORWARD,FORWARD};
 
-const int motorPWMPins[3]            = {8,10,9};
-const int motorDirPins[3]            = {29,28,27};
+const int motorPWMPins[3]            = {8,9,10};
+const int motorDirPins[3]            = {29,27,28};
 const int ultrasonicSensorTrigPins[] = {30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {31,33,35,37,39,41};
 const int infraredSensorPins[] = {0,1,2,3};
@@ -173,8 +173,8 @@ void parseCommand()
         int encoderNum;
         buffer_Flush(TXBuffer);
         sscanf(&rcv_buffer[1], " %d \r",&encoderNum);
-        itoa(encoderCounts[encoderNum],TXBuffer,10);   // serial.print can not handle printing a 64bit int so we turn it  into a string
-        Serial.println(TXBuffer);
+        //itoa(encoderCounts[encoderNum],TXBuffer,10);   // serial.print can not handle printing a 64bit int so we turn it  into a string
+        Serial.println(encoderCounts[encoderNum]);
         break;
       case 'M':
       case 'm':
