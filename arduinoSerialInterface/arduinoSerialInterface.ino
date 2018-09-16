@@ -1,3 +1,5 @@
+#include <HardwareSerial.h>
+
 #define ENCODER_0INTERRUPT_PIN 5// pin that interrupts on both rising and falling of A and B channels of encoder
 #define ENCODER_1INTERRUPT_PIN 4 // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/ to see the encoder pin number
 #define ENCODER_2INTERRUPT_PIN 3
@@ -165,7 +167,6 @@ void parseCommand()
 
     //uint16_t value = analogRead(INFRARED_SENSOR_0);
         //  double distance = get_IR(value);
-    
     switch(command)
     {
       case 'E':
@@ -174,7 +175,7 @@ void parseCommand()
         buffer_Flush(TXBuffer);
         sscanf(&rcv_buffer[1], " %d \r",&encoderNum);
         //itoa(encoderCounts[encoderNum],TXBuffer,10);   // serial.print can not handle printing a 64bit int so we turn it  into a string
-        Serial.println(encoderCounts[encoderNum]);
+        Serial.println (encoderCounts[encoderNum]);
         break;
       case 'M':
       case 'm':
