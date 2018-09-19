@@ -1,5 +1,5 @@
 #include <HardwareSerial.h>
-
+#include <SimpleTimer.h>
 #define ENCODER_0INTERRUPT_PIN 5// pin that interrupts on both rising and falling of A and B channels of encoder
 #define ENCODER_1INTERRUPT_PIN 4 // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/ to see the encoder pin number
 #define ENCODER_2INTERRUPT_PIN 3
@@ -10,6 +10,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
+#define VELOCITY_TIME 60000
 volatile long encoderCounts[] = {0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {FORWARD,FORWARD,FORWARD};
 
@@ -18,10 +19,15 @@ const int motorDirPins[3]            = {29,27,28};
 const int ultrasonicSensorTrigPins[] = {30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {31,33,35,37,39,41};
 const int infraredSensorPins[] = {0,1,2,3};
-
+double velocity;
 char rcv_buffer[64];  // holds commands recieved
 char TXBuffer[64];    // temp storage for large data sent 
 void motor(int,int,bool);
+SimpleTimer velocityTimer;
+bool test = false;
+void checkVelocity();
+unsigned long pastTime = 0; // millis() works for up to 50days! we'll need an unsigned long for it
+long pastEncoderValue=0;
 
 
 void setup() {
@@ -32,7 +38,8 @@ void setup() {
    pinMode(ultrasonicSensorTrigPins[i], OUTPUT);
    pinMode(ultrasonicSensorEchoPins[i], INPUT);
   }
-
+  
+  velocityTimer.setInterval(VELOCITY_TIME,checkVelocity);
   //INFRARED SENSORS
   pinMode(INFRARED_SENSOR_0,INPUT);
   pinMode(INFRARED_SENSOR_1,INPUT);
@@ -61,8 +68,35 @@ void setup() {
 }
 
 void loop() {
-    
-    receiveBytes();
+    velocityTimer.run();
+   
+//  while(encoderCounts[0] <= 2175 && test == false)
+//{
+//  motor(0,100,0);
+//  Serial.print("Encoder: ");
+// Serial.println(encoderCounts[0]);
+// }   
+// test = true;
+//  motor(0,0,1);
+  receiveBytes();
+  
+}
+
+void checkVelocity() {
+  double tempRPM;
+//  Serial.println(encoderCounts[0]-pastEncoderValue);
+//  Serial.println((millis()-pastTime));
+//  velocity = (((encoderCounts[0]-pastEncoderValue)*0.08567979964)/((millis()-pastTime)* .001)*.001);
+  tempRPM = ((((encoderCounts[0]-pastEncoderValue)/2175)/((millis()-pastTime) * .001 ))*60);
+  
+  pastTime = millis();
+  pastEncoderValue = encoderCounts[0];
+//  Serial.print("meters per  sec: ");
+// 
+//  Serial.println(velocity);
+  Serial.print("Revolutions per min: ");
+  Serial.println((tempRPM));
+  
   
 }
 
@@ -116,12 +150,12 @@ void motor(int motorNumber, int pwm, bool dir)
   digitalWrite(motorDirPins[motorNumber],dir);
   // could input check here for less than 255
   analogWrite(motorPWMPins[motorNumber], pwm);
-  Serial.print("Motor: ");
-  Serial.print(motorNumber);
-  Serial.print(" Speed: ");
-  Serial.print(pwm);
-  Serial.print(" Direction: ");
-  Serial.println(dir);
+//  Serial.print("Motor: ");
+//  Serial.print(motorNumber);
+//  Serial.print(" Speed: ");
+//  Serial.print(pwm);
+//  Serial.print(" Direction: ");
+//  Serial.println(dir);
   
 }
 

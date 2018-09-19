@@ -23,7 +23,7 @@ def motors(m1,m2,m3):
 		print(ser.readline().decode("ascii"))
 
 
-motors(0,0,0)
+motors(00,00,00)
 #motors(100,100,100)
 #ser.write("clear\r".encode())
 while True:
