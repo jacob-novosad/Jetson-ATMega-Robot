@@ -1,6 +1,9 @@
 import serial
 
 ser = serial.Serial('/dev/ttyACM0',115200);
+
+
+
 def readEncoders():
 	encoders =  [None] *3
 	for x in range(3):
@@ -23,15 +26,41 @@ def motors(m1,m2,m3):
 		print(ser.readline().decode("ascii"))
 
 
-motors(00,00,00)
+#motors(00,00,00)
 #motors(100,100,100)
 #ser.write("clear\r".encode())
-while True:
-	command = input("Enter Command")
-	command = command+'\r'
+
+
+
+
+def velocityToPWM(velocity):
+	PWMvalue = 0
+	PWMValue = 124220*velocity**4 - 238623 * velocity**3 + 171697* velocity**2 - 54490* velocity + 6470
+	return PWMValue
+
+
+def xyThetaToWheelV(x,y,theta):
+	wheel0Velocity=0
+	wheel1Velocity=0
+	wheel2Velocity=0
 	
-	ser.write(command.encode())
-	print (ser.readline().decode("ascii"))
+	wheel0Velocity = (((3.4907*y) - (0.6632* theta))* ((.03*60) / (2*3.14)));
+	wheel1Velocity = (((3.023*x) - (1.7453*y) - (0.6632* theta))* ((.03*60) / (2*3.14)));
+	wheel2Velocity = (((-3.023 * x) - (1.7453 * y) - (0.6632 * theta))* ((.03*60) / (2*3.14)));
+	
+
+	print("PWM value for wheel0: " + str(velocityToPWM(wheel0Velocity)))
+	#print(velocityToPWM(wheel0Velocity));
+	print("PWM value for wheel1: " + str(velocityToPWM(wheel1Velocity)));
+	print("PWM value for wheel2: " + str(velocityToPWM(wheel2Velocity)));
+
+xyThetaToWheelV(.5,0,0)
+#while True:
+#	command = input("Enter Command")
+#	command = command+'\r'
+	
+#	ser.write(command.encode())
+#	print (ser.readline().decode("ascii"))
 
 
 

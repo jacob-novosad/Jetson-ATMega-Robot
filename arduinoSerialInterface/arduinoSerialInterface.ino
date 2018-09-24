@@ -24,17 +24,20 @@ const int ultrasonicSensorTrigPins[] = {
   30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {
   31,33,35,37,39,41};
-const int infraredSensorPins[] = {
-  0,1,2,3};
-double velocity;
+const int infraredSensorPins[] = {0,1,2,3};
+  
+  
+double velocityValues[]   = {0,0,0};
+long pastEncoderValues[]  = {0,0,0};
+unsigned long pastTimes[] = {0,0,0};// millis() works for up to 50days! we'll need an unsigned long for it
+
+
 char rcv_buffer[64];  // holds commands recieved
 char TXBuffer[64];    // temp storage for large data sent 
 void motor(int,int,bool);
 SimpleTimer velocityTimer;
-bool test = false;
 void checkVelocity();
-unsigned long pastTime = 0; // millis() works for up to 50days! we'll need an unsigned long for it
-long pastEncoderValue=0;
+
 
 
 void setup() {
@@ -86,23 +89,37 @@ void loop() {
   // test = true;
   //  motor(0,0,1);
   receiveBytes();
+  checkVelocity();
 
 }
 
 void checkVelocity() {
-  double tempRPM;
+  
+  
+  for( int i=0; i<3;i++)
+  {
+    velocityValues[i] = (((encoderCounts[i]-pastEncoderValues[i])*0.08567979964)/((millis()-pastTimes[i])*.001));
+    pastTimes[i]= millis();
+    pastEncoderValues[i]=encoderCounts[i];
+    
+    Serial.print("Encoder ");
+    Serial.print(i);
+    Serial.print(" ");
+    Serial.println(velocityValues[i]);
+  }
+  //double tempRPM;
   //  Serial.println(encoderCounts[0]-pastEncoderValue);
   //  Serial.println((millis()-pastTime));
   //  velocity = (((encoderCounts[0]-pastEncoderValue)*0.08567979964)/((millis()-pastTime)* .001)*.001);
-  tempRPM = ((((encoderCounts[0]-pastEncoderValue)/2175)/((millis()-pastTime) * .001 ))*60);
+  //tempRPM = ((((encoderCounts[0]-pastEncoderValue)/2175)/((millis()-pastTime) * .001 ))*60);
 
-  pastTime = millis();
-  pastEncoderValue = encoderCounts[0];
+  //pastTime = millis();
+  //pastEncoderValue = encoderCounts[0];
   //  Serial.print("meters per  sec: ");
   // 
   //  Serial.println(velocity);
-  Serial.print("Revolutions per min: ");
-  Serial.println((tempRPM));
+  //Serial.print("Revolutions per min: ");
+  //Serial.println((tempRPM));
 
 
 }
