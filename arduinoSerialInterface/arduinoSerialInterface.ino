@@ -10,7 +10,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 60000
+#define VELOCITY_TIME 500
 volatile long encoderCounts[] = {
   0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {
@@ -89,7 +89,7 @@ void loop() {
   // test = true;
   //  motor(0,0,1);
   receiveBytes();
-  checkVelocity();
+  //checkVelocity();
 
 }
 
@@ -102,10 +102,10 @@ void checkVelocity() {
     pastTimes[i]= millis();
     pastEncoderValues[i]=encoderCounts[i];
     
-    Serial.print("Encoder ");
-    Serial.print(i);
-    Serial.print(" ");
-    Serial.println(velocityValues[i]);
+//    Serial.print("Encoder ");
+//    Serial.print(i);
+//    Serial.print(" ");
+//    Serial.println(velocityValues[i]);
   }
   //double tempRPM;
   //  Serial.println(encoderCounts[0]-pastEncoderValue);
@@ -233,7 +233,7 @@ void parseCommand()
     buffer_Flush(TXBuffer);
     sscanf(&rcv_buffer[1], " %d \r",&encoderNum);
     //itoa(encoderCounts[encoderNum],TXBuffer,10);   // serial.print can not handle printing a 64bit int so we turn it  into a string
-    Serial.println (encoderCounts[encoderNum]);
+    Serial.println(encoderCounts[encoderNum]);
     break;
   case 'M':
   case 'm':
