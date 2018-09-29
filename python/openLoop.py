@@ -1,6 +1,11 @@
 import serial
 import math
+import xbox
+import time
+
 ser = serial.Serial('/dev/ttyACM0',115200);
+joy = xbox.Joystick()
+
 
 
 
@@ -82,13 +87,29 @@ def xyThetaToWheelV(x,y,theta):
 	#ser.write(command.encode())
 	#print (ser.readline().decode("ascii"))
 
+#while True:
+#	x = float(input("enter x: "))
+#	y = float(input("enter y: "))
+#	theta = float(input("enter theta: "))
+#	xyThetaToWheelV(x,y,theta)
+
+theta = 0
 while True:
-	x = float(input("enter x"))
-	y = float(input("enter y"))
-	theta = float(input("enter theta"))
-	xyThetaToWheelV(x,y,theta)
-
-
+	theta = 0
+	time.sleep(.01)
+	if(joy.B()):
+		joy.close()
+		motors(0,0,0)
+		quit()
+	(x,y) = joy.leftStick()
+	(x1,y1) = joy.rightStick()
+	print("x: "+str(y))
+	print("y: "+str(x1))
+	if(joy.rightTrigger() > 0):
+		theta = joy.rightTrigger()
+	if(joy.leftTrigger() > 0):
+		theta= -joy.leftTrigger()
+	xyThetaToWheelV(-y,theta,-x1)
 
 
 
