@@ -25,8 +25,19 @@ const int ultrasonicSensorTrigPins[] = {
 const int ultrasonicSensorEchoPins[] = {
   31,33,35,37,39,41};
 const int infraredSensorPins[] = {0,1,2,3};
+
+double Kp = 625;
+double Ki = 3;
+double Kd = 0;
+  double sum=0;
+    double error = 0;
+      double setpoint = .6;
+  double pwmValue = 0;
   
-  
+  double oldError;
+  unsigned long lastTime;
+  unsigned long timeChange;
+
 double velocityValues[]   = {0,0,0};
 long pastEncoderValues[]  = {0,0,0};
 unsigned long pastTimes[] = {0,0,0};// millis() works for up to 50days! we'll need an unsigned long for it
@@ -82,14 +93,15 @@ void loop() {
 
   //  while(encoderCounts[0] <= 2175 && test == false)
   //{
-  //  motor(0,100,0);
+    //motor(0,0,0);
   //  Serial.print("Encoder: ");
   // Serial.println(encoderCounts[0]);
   // }   
   // test = true;
   //  motor(0,0,1);
-  receiveBytes();
+   receiveBytes();
   //checkVelocity();
+  //pid();
 
 }
 
@@ -101,11 +113,11 @@ void checkVelocity() {
     velocityValues[i] = (((encoderCounts[i]-pastEncoderValues[i])*0.08567979964)/((millis()-pastTimes[i])*.001));
     pastTimes[i]= millis();
     pastEncoderValues[i]=encoderCounts[i];
-    
-//    Serial.print("Encoder ");
-//    Serial.print(i);
-//    Serial.print(" ");
-//    Serial.println(velocityValues[i]);
+//    
+//   Serial.print("Encoder ");
+//   Serial.print(i);
+//   Serial.print(" ");
+//   Serial.println(velocityValues[i]);
   }
   //double tempRPM;
   //  Serial.println(encoderCounts[0]-pastEncoderValue);
@@ -122,6 +134,39 @@ void checkVelocity() {
   //Serial.println((tempRPM));
 
 
+}
+
+void pid() {
+
+      delay(50);
+  Serial.println("start");
+  while(1)
+  {
+    timeChange = (millis() - lastTime);
+    lastTime = millis();
+    checkVelocity();
+    sum = (sum +(error*(double)timeChange));
+    
+    //sum = sum+error;
+    Serial.println(sum);
+    pwmValue = (Kp * error); //+ (Ki*sum));
+    if(pwmValue < 0)
+    {
+      pwmValue = 0;
+    }
+    motor(0,0,0);
+    error = setpoint -velocityValues[0]/1000;
+    Serial.print("Error: ");
+    Serial.println(error);
+    Serial.print("Velocity: ");
+    Serial.println(velocityValues[0]/1000);
+    Serial.print("PWM Value: ");
+    Serial.println(pwmValue);
+  }
+  
+  
+  
+  
 }
 
 void encoder0_ISR() // encoder0 interrupt service routine 

@@ -1,7 +1,7 @@
 import serial
 import math
 import xbox
-import time
+
 
 ser = serial.Serial('/dev/ttyACM0',115200);
 joy = xbox.Joystick()
@@ -37,9 +37,8 @@ def motors(m1,m2,m3):
 
 
 
-theta = 0
+
 def velocityToPWM(velocity):
-	theta = 0
 	isNegative = False
 	if(velocity < 0):
 		velocity = abs(velocity)
@@ -74,12 +73,11 @@ def xyThetaToWheelV(x,y,theta):
 	print("Wheel0 velocity: " +str(wheel0Velocity))
 	print("Wheel1 velocity: " +str(wheel1Velocity))
 	print("Wheel2 velocity: " +str(wheel2Velocity))
-	print("PWM value for wheel0: " + str(wheel0Velocity*425) )
+	print("PWM value for wheel0: " + str(velocityToPWM(wheel0Velocity)))
 	#print(velocityToPWM(wheel0Velocity));
 	print("PWM value for wheel1: " + str(velocityToPWM(wheel1Velocity)));
 	print("PWM value for wheel2: " + str(velocityToPWM(wheel2Velocity)));
-	motors(wheel0Velocity*425,wheel1Velocity*425,wheel2Velocity*425)
-	#motors(100,100,100)
+	motors(wheel0Velocity*(60*30/(math.pi*2)*425),wheel1Velocity*425,wheel2Velocity*425);
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
 #while True:
@@ -89,29 +87,20 @@ def xyThetaToWheelV(x,y,theta):
 	#ser.write(command.encode())
 	#print (ser.readline().decode("ascii"))
 
-while True:
-	x = float(input("enter x: "))
-	y = float(input("enter y: "))
-	theta = float(input("enter theta: "))
-	xyThetaToWheelV(x,y,theta)
-
-#theta = 0
 #while True:
-#	theta = 0
-#	time.sleep(.01)
-#	if(joy.B()):
-#		joy.close()
-#		motors(0,0,0)
-#		quit()
-#	(x,y) = joy.leftStick()
-#	(x1,y1) = joy.rightStick()
-#	print("x: "+str(y))
-#	print("y: "+str(x1))
-#	if(joy.rightTrigger() > 0):
-#		theta = joy.rightTrigger()
-#	if(joy.leftTrigger() > 0):
-#		theta= -joy.leftTrigger()
-#	xyThetaToWheelV(-y,-x1,theta)
+#	x = float(input("enter x: "))
+#	y = float(input("enter y: "))
+#	theta = float(input("enter theta: "))
+#	xyThetaToWheelV(x,y,theta)
+
+while True:
+	if(joy.A()):
+		joy.close()
+		quit()
+	(x,y) = joy.leftStick()
+	print("x: "+str(y))
+	print("y: "+str(x))
+	xyThetaToWheelV(y,x,0)
 
 
 
