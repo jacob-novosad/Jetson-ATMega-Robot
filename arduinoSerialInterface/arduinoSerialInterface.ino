@@ -10,7 +10,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 500
+#define VELOCITY_TIME 100
 volatile long encoderCounts[] = {
   0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {
@@ -24,23 +24,35 @@ const int ultrasonicSensorTrigPins[] = {
   30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {
   31,33,35,37,39,41};
-const int infraredSensorPins[] = {0,1,2,3};
+const int infraredSensorPins[] = {
+  0,1,2,3};
 
-double Kp = 625;
-double Ki = 3;
-double Kd = 0;
-  double sum=0;
-    double error = 0;
-      double setpoint = .6;
-  double pwmValue = 0;
-  
-  double oldError;
-  unsigned long lastTime;
-  unsigned long timeChange;
+double Kp = 10;
+double Ki = 1;
+//double Kd = 0;
 
-double velocityValues[]   = {0,0,0};
-long pastEncoderValues[]  = {0,0,0};
-unsigned long pastTimes[] = {0,0,0};// millis() works for up to 50days! we'll need an unsigned long for it
+double sum[3]        = {
+  0,0,0};
+double error[3]      = {
+  0,0,0};
+double setpoint[3]   = {
+  0,0,0};
+double pwmValue[3]   = {
+  0,0,0};
+
+unsigned long lastTime[3]   = {
+  0,0,0};
+unsigned long timeChange[3] = {
+  0,0,0};
+
+double velocityValues[3]   = {
+  0,0,0};
+float rpmValues[3]        = {
+  0,0,0};
+long pastEncoderValues[3]  = {
+  0,0,0};
+unsigned long pastTimes[3] = {
+  0,0,0};// millis() works for up to 50days! we'll need an unsigned long for it
 
 
 char rcv_buffer[64];  // holds commands recieved
@@ -48,6 +60,9 @@ char TXBuffer[64];    // temp storage for large data sent
 void motor(int,int,bool);
 SimpleTimer velocityTimer;
 void checkVelocity();
+double one;
+double two;
+double three;
 
 
 
@@ -93,31 +108,36 @@ void loop() {
 
   //  while(encoderCounts[0] <= 2175 && test == false)
   //{
-    //motor(0,0,0);
+  //motor(0,0,0);
   //  Serial.print("Encoder: ");
   // Serial.println(encoderCounts[0]);
   // }   
   // test = true;
   //  motor(0,0,1);
-   receiveBytes();
+  receiveBytes();
   //checkVelocity();
   //pid();
 
 }
 
 void checkVelocity() {
-  
-  
+
+
   for( int i=0; i<3;i++)
   {
     velocityValues[i] = (((encoderCounts[i]-pastEncoderValues[i])*0.08567979964)/((millis()-pastTimes[i])*.001));
+    one = encoderCounts[i] - pastEncoderValues[i];
+
+    one = one/2249;
+    rpmValues[i] = one/((millis()-pastTimes[i])*.001);
     pastTimes[i]= millis();
     pastEncoderValues[i]=encoderCounts[i];
-//    
-//   Serial.print("Encoder ");
-//   Serial.print(i);
-//   Serial.print(" ");
-//   Serial.println(velocityValues[i]);
+    printDouble(rpmValues[0],90000000);
+    //    
+    //   Serial.print("Encoder ");
+    //   Serial.print(i);
+    //   Serial.print(" ");
+    //   Serial.println(velocityValues[i]);
   }
   //double tempRPM;
   //  Serial.println(encoderCounts[0]-pastEncoderValue);
@@ -138,35 +158,45 @@ void checkVelocity() {
 
 void pid() {
 
-      delay(50);
-  Serial.println("start");
-  while(1)
+  delay(20);
+  
+  for(int i =0;i<3;i++)
   {
-    timeChange = (millis() - lastTime);
-    lastTime = millis();
-    checkVelocity();
-    sum = (sum +(error*(double)timeChange));
-    
-    //sum = sum+error;
-    Serial.println(sum);
-    pwmValue = (Kp * error); //+ (Ki*sum));
-    if(pwmValue < 0)
+    if(setpoint[i] != 0)
     {
-      pwmValue = 0;
+    
+      //checkVelocity();
+      timeChange[i] = (millis() - lastTime[i]);
+      lastTime[i] = millis();
+      
+      sum[i] = (sum[i] +(error[i]*(double)timeChange[i]));
+    
+      //sum = sum+error;
+      //Serial.println(sum[i]);
+      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]);
+      
+      if(pwmValue[i] < 0){
+        motor(i,pwmValue[i]*-1,1);
+      }
+      else{
+        motor(i,pwmValue[i],0);
+      }
+    
+      error[i] = setpoint[i] -velocityValues[i]/1000;
+  //    Serial.println("---------------------------");
+  //    Serial.println(i);
+  //    Serial.print("Error: ");
+       //Serial.println(error[i]);
+  //    Serial.print("Velocity: ");
+  //    Serial.println(velocityValues[i]/1000);
+  //    Serial.print("PWM Value: ");
+  //    Serial.println(pwmValue[i]);
     }
-    motor(0,0,0);
-    error = setpoint -velocityValues[0]/1000;
-    Serial.print("Error: ");
-    Serial.println(error);
-    Serial.print("Velocity: ");
-    Serial.println(velocityValues[0]/1000);
-    Serial.print("PWM Value: ");
-    Serial.println(pwmValue);
+    else
+    {
+      motor(i,0,0);
+    }
   }
-  
-  
-  
-  
 }
 
 void encoder0_ISR() // encoder0 interrupt service routine 
@@ -326,6 +356,17 @@ void parseCommand()
     Serial.println (" cm");
     Serial.println ();
     break;
+  case 'v':
+  case 'V':
+    
+    int wheel;
+    int  velocity;
+    sscanf(&rcv_buffer[1], "%d %d \r",&wheel,&velocity);
+    setpoint[wheel] = (double)velocity/10;
+    Serial.println(wheel);
+    Serial.println((double)velocity/10);
+    Serial.println("itworked");
+    break;
 
   default:
     Serial.println("Error: Serial input incorrect");
@@ -340,4 +381,19 @@ double get_IR(uint16_t value){
   return 4800.0 / (value - 20.0);
 
 }
+void printDouble( double val, unsigned int precision){
+// prints val with number of decimal places determine by precision
+// NOTE: precision is 1 followed by the number of zeros for the desired number of decimial places
+// example: printDouble( 3.1415, 100); // prints 3.14 (two decimal places)
+
+   Serial.print (int(val));  //prints the int part
+   Serial.print("."); // print the decimal point
+   unsigned int frac;
+   if(val >= 0)
+       frac = (val - int(val)) * precision;
+   else
+       frac = (int(val)- val ) * precision;
+   Serial.println(frac,DEC) ;
+} 
+
 

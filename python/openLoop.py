@@ -74,26 +74,26 @@ def xyThetaToWheelV(x,y,theta):
 	print("Wheel0 velocity: " +str(wheel0Velocity))
 	print("Wheel1 velocity: " +str(wheel1Velocity))
 	print("Wheel2 velocity: " +str(wheel2Velocity))
-	print("PWM value for wheel0: " + str(wheel0Velocity*425) )
+	print("PWM value for wheel0: " + str(wheel0Velocity*425))
 	#print(velocityToPWM(wheel0Velocity));
-	print("PWM value for wheel1: " + str(velocityToPWM(wheel1Velocity)));
-	print("PWM value for wheel2: " + str(velocityToPWM(wheel2Velocity)));
+	print("PWM value for wheel1: " + str(wheel1Velocity*425));
+	print("PWM value for wheel2: " + str(wheel2Velocity*425));
 	motors(wheel0Velocity*425,wheel1Velocity*425,wheel2Velocity*425)
 	#motors(100,100,100)
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
-#while True:
-	#command = input("Enter Command")
-	#command = command+'\r'
-	
-	#ser.write(command.encode())
-	#print (ser.readline().decode("ascii"))
-
 while True:
-	x = float(input("enter x: "))
-	y = float(input("enter y: "))
-	theta = float(input("enter theta: "))
-	xyThetaToWheelV(x,y,theta)
+	command = input("Enter Command")
+	command = command+'\r'
+	
+	ser.write(command.encode())
+	print (ser.readline().decode("ascii"))
+
+#while True:
+#	x = float(input("enter x: "))
+#	y = float(input("enter y: "))
+#	theta = float(input("enter theta: "))
+#	xyThetaToWheelV(x,y,theta)
 
 #theta = 0
 #while True:
@@ -111,7 +111,7 @@ while True:
 #		theta = joy.rightTrigger()
 #	if(joy.leftTrigger() > 0):
 #		theta= -joy.leftTrigger()
-#	xyThetaToWheelV(-y,-x1,theta)
+#	xyThetaToWheelV(-y,-x1/2,theta)
 
 
 
