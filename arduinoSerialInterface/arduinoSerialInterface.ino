@@ -10,7 +10,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 100
+#define VELOCITY_TIME 5
 volatile long encoderCounts[] = {
   0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {
@@ -27,8 +27,8 @@ const int ultrasonicSensorEchoPins[] = {
 const int infraredSensorPins[] = {
   0,1,2,3};
 
-double Kp = 10;
-double Ki = 1;
+double Kp = 3/60;
+double Ki = .1/60;
 //double Kd = 0;
 
 double sum[3]        = {
@@ -116,7 +116,7 @@ void loop() {
   //  motor(0,0,1);
   receiveBytes();
   //checkVelocity();
-  //pid();
+  pid();
 
 }
 
@@ -129,7 +129,7 @@ void checkVelocity() {
     one = encoderCounts[i] - pastEncoderValues[i];
 
     one = one/2249;
-    rpmValues[i] = one/((millis()-pastTimes[i])*.001);
+    rpmValues[i] = one/((millis()-pastTimes[i])*.001)*60;
     pastTimes[i]= millis();
     pastEncoderValues[i]=encoderCounts[i];
     printDouble(rpmValues[0],90000000);
@@ -182,15 +182,15 @@ void pid() {
         motor(i,pwmValue[i],0);
       }
     
-      error[i] = setpoint[i] -velocityValues[i]/1000;
-  //    Serial.println("---------------------------");
-  //    Serial.println(i);
-  //    Serial.print("Error: ");
-       //Serial.println(error[i]);
-  //    Serial.print("Velocity: ");
-  //    Serial.println(velocityValues[i]/1000);
-  //    Serial.print("PWM Value: ");
-  //    Serial.println(pwmValue[i]);
+      error[i] = setpoint[i] -rpmValues[i];
+      Serial.println("---------------------------");
+      Serial.println(i);
+        Serial.print("Error: ");
+        Serial.println(error[i]);
+      Serial.print("Velocity: ");
+      Serial.println(rpmValues[i]);
+      Serial.print("PWM Value: ");
+      Serial.println(pwmValue[i]);
     }
     else
     {
