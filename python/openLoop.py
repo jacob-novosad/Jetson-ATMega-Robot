@@ -90,42 +90,48 @@ def xyThetaToWheelV(xd,yd,thetad):
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
 
-############## Simple Serial Communicator to Arduino ##############
-#while True:
-#	command = input("Enter Command")
-#	command = command+'\r'
-	
-#	ser.write(command.encode())
-#	print (ser.readline().decode("ascii"))
+mode = str(input("Enter mode. s for serial, t for input tester, c for controller"))
 
+if(mode == 's'):
+
+############## Simple Serial Communicator to Arduino ##############
+	while True:
+		command = input("Enter Command")
+		command = command+'\r'
+		ser.write(command.encode())
+		print (ser.readline().decode("ascii"))
+elif mode == 't':
 ################ Simple Input Tester Loop ###############
-while True:
-	time.sleep(.3)
-	x = float(input("enter x: "))
-	y = float(input("enter y: "))
-	theta = float(input("enter theta: "))
-	xyThetaToWheelV(x,y,theta)
+	while True:
+		time.sleep(.5)
+		x = float(input("enter x: "))
+		y = float(input("enter y: "))
+		theta = float(input("enter theta: "))
+		xyThetaToWheelV(x,y,theta)
 
 #velocityValues(1800,1800,1800)
 
 ############### Contoller demo for testing  ################
-#theta = 0
-#while True:
-#	theta = 0
-#	time.sleep(.2)
-#	if(joy.B()):
-#		joy.close()
-#		motors(0,0,0)
-#		quit()
-#	(x,y) = joy.leftStick()
-#	(x1,y1) = joy.rightStick()
-#	print("x: "+str(y))
-#	print("y: "+str(x1))
-#	if(joy.rightTrigger() > 0):
-#		theta = joy.rightTrigger()
-#	if(joy.leftTrigger() > 0):
-#		theta= -joy.leftTrigger()
-#	xyThetaToWheelV(-y/1.5,-x1/1.5,theta*2)
+
+else:
+
+	theta = 0
+	while True:
+		theta = 0
+		time.sleep(.3)
+		if(joy.B()):
+			joy.close()
+			motors(0,0,0)
+			quit()
+		(x,y) = joy.leftStick()
+		(x1,y1) = joy.rightStick()
+		print("x: "+str(y))
+		print("y: "+str(x1))
+		if(joy.rightTrigger() > 0):
+			theta = joy.rightTrigger()
+		if(joy.leftTrigger() > 0):
+			theta= -joy.leftTrigger()
+		xyThetaToWheelV(-y/1.5,-x1/1.5,theta*2)
 
 
 
