@@ -37,14 +37,10 @@ double Kp = 3/60;
 double Ki = .1/60;
 //double Kd = 0;
 
-double sum[3]        = {
-  0,0,0};
-double error[3]      = {
-  0,0,0};
-double setpoint[3]   = {
-  0,0,0};
-double pwmValue[3]   = {
-  0,0,0};
+double sum[3]        = {0,0,0};
+double error[3]      = {0,0,0};
+double setpoint[3]   = {0,0,0};
+double pwmValue[3]   = {0,0,0};
 
 unsigned long lastTime[3]   = {
   0,0,0};
@@ -87,7 +83,7 @@ void setup() {
   pinMode(INFRARED_SENSOR_1,INPUT);
   pinMode(INFRARED_SENSOR_2,INPUT);
   pinMode(INFRARED_SENSOR_3,INPUT);
-  //Left Motor
+  // Motor
   for(int i =0; i<3;i++)
   {
     pinMode(motorPWMPins[i], OUTPUT);
@@ -151,7 +147,7 @@ void pi() {
     // if pi not set to 0 for robot
     if(setpoint[i] != 0)
     {
-
+      
       //updateRPM();
       timeChange[i] = (millis() - lastTime[i]);
       lastTime[i] = millis();
@@ -169,18 +165,21 @@ void pi() {
         motor(i,pwmValue[i],0);
       }
 
+//      
+//      Serial.println("---------------------------");
+//      Serial.println(i);
+//      Serial.print("Error: ");
+//      Serial.println(error[i]);
+//      Serial.print("Revs PM Value: ");
+//      Serial.println(rpmValues[i]);
+//      Serial.print("PWM Value: ");
+//      Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];
-      // Serial.println("---------------------------");
-      // Serial.println(i);
-      // Serial.print("Error: ");
-      // Serial.println(error[i]);
-      // Serial.print("Velocity: ");
-      // Serial.println(rpmValues[i]);
-      // Serial.print("PWM Value: ");
-      // Serial.println(pwmValue[i]);
+      
     }
     else
     {
+      error[i] = 0;
       motor(i,0,0);
     }
   }
@@ -353,12 +352,18 @@ void parseCommand()
     Serial.println(rpm1);
     Serial.println(rpm2);
     
+    
+   for(int i = 0;i<3;i++)
+   {
+//      error[i] = 0;
+      sum[i]   = 0;
+    }
+
     setpoint[0] = (double)(rpm0/10);
-    error[0] = 0;
+
     setpoint[1] = (double)(rpm1/10);
-    error[1] = 0;
+
     setpoint[2] = (double)(rpm2/10);
-    error[2] = 0;
 
   default:
     Serial.println("Error: Serial input incorrect");
