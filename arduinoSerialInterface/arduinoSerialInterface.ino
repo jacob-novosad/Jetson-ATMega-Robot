@@ -1,16 +1,22 @@
 #include <HardwareSerial.h>
 #include <SimpleTimer.h>
-#define ENCODER_0INTERRUPT_PIN 5// pin that interrupts on both rising and falling of A and B channels of encoder
-#define ENCODER_1INTERRUPT_PIN 4 // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/ to see the encoder pin number
-#define ENCODER_2INTERRUPT_PIN 3
+
+
+
+#define ENCODER_0INTERRUPT_PIN 5// pin  18that interrupts on both rising and falling of A and B channels of encoder
+#define ENCODER_1INTERRUPT_PIN 4 // pin 19 https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/ to see the encoder pin number
+#define ENCODER_2INTERRUPT_PIN 3 // pin 20
 
 #define FORWARD 0
-#define BACKWARDS 1
+#define BACKWARD 1
 #define INFRARED_SENSOR_0 A0
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 5
+#define VELOCITY_TIME 5          //Every # miliseconds we update our rpm of wheels
+
+
+
 volatile long encoderCounts[] = {
   0,0,0}; // variables accesed inside of an interrupt need to be volatile
 bool motorDir[3] = {
@@ -58,11 +64,11 @@ unsigned long pastTimes[3] = {
 char rcv_buffer[64];  // holds commands recieved
 char TXBuffer[64];    // temp storage for large data sent 
 void motor(int,int,bool);
-SimpleTimer velocityTimer;
-void checkVelocity();
-double one;
-double two;
-double three;
+SimpleTimer rpmUpdateTimer;
+void updateRPM();
+double changeInEncoders;
+double changeInRevolutions;
+double changeInTimeSeconds;
 
 
 
@@ -75,122 +81,103 @@ void setup() {
     pinMode(ultrasonicSensorEchoPins[i], INPUT);
   }
 
-  velocityTimer.setInterval(VELOCITY_TIME,checkVelocity);
+  rpmUpdateTimer.setInterval(VELOCITY_TIME,updateRPM);
   //INFRARED SENSORS
   pinMode(INFRARED_SENSOR_0,INPUT);
   pinMode(INFRARED_SENSOR_1,INPUT);
   pinMode(INFRARED_SENSOR_2,INPUT);
   pinMode(INFRARED_SENSOR_3,INPUT);
   //Left Motor
-  pinMode(motorPWMPins[0], OUTPUT);
-  pinMode(motorDirPins[0], OUTPUT); //LOW=CCW HIGH=CW
+  for(int i =0; i<3;i++)
+  {
+    pinMode(motorPWMPins[i], OUTPUT);
+    pinMode(motorDirPins[i], OUTPUT); //LOW=CCW HIGH=CW
+  }
 
-  //Right Motor
-  pinMode(motorPWMPins[1], OUTPUT);
-  pinMode(motorDirPins[1], OUTPUT);
-
-  //Rear Motor
-  pinMode(motorPWMPins[2], OUTPUT);
-  pinMode(motorDirPins[2], OUTPUT);
-  buffer_Flush(rcv_buffer);
-  pinMode(2,INPUT_PULLUP);
+  pinMode(18,INPUT_PULLUP);
   pinMode(19,INPUT_PULLUP);
   pinMode(20,INPUT_PULLUP);
+
+
+  buffer_Flush(rcv_buffer);
+
   while (! Serial);
+
   attachInterrupt(ENCODER_0INTERRUPT_PIN,encoder0_ISR,CHANGE);
   attachInterrupt(ENCODER_1INTERRUPT_PIN,encoder1_ISR,CHANGE);
   attachInterrupt(ENCODER_2INTERRUPT_PIN,encoder2_ISR,CHANGE);
-  //  
+
+
 }
 
 void loop() {
-  velocityTimer.run();
+  // this is our timer called every millisecond defined by VELOCITY_TIME (at top) to update our rpm 
+  rpmUpdateTimer.run();
 
-  //  while(encoderCounts[0] <= 2175 && test == false)
-  //{
-  //motor(0,0,0);
-  //  Serial.print("Encoder: ");
-  // Serial.println(encoderCounts[0]);
-  // }   
-  // test = true;
-  //  motor(0,0,1);
+  // determines if we have any serial commands and interpruts them
   receiveBytes();
-  //checkVelocity();
-  pid();
+
+  // proportional integral controller
+  pi();
 
 }
 
-void checkVelocity() {
-
+void updateRPM() {
 
   for( int i=0; i<3;i++)
   {
-    velocityValues[i] = (((encoderCounts[i]-pastEncoderValues[i])*0.08567979964)/((millis()-pastTimes[i])*.001));
-    one = encoderCounts[i] - pastEncoderValues[i];
+    // linear velocity velocityValues[i] = (((encoderCounts[i]-pastEncoderValues[i])*0.08567979964)/((millis()-pastTimes[i])*.001));
+    changeInEncoders = encoderCounts[i] - pastEncoderValues[i];
+    changeInTimeSeconds = ((millis()-pastTimes[i])*.001);// *.001 to convert to seconds
+    changeInRevolutions = changeInEncoders/2249;
 
-    one = one/2249;
-    rpmValues[i] = one/((millis()-pastTimes[i])*.001)*60;
+    rpmValues[i] = (changeInRevolutions/(changeInTimeSeconds))*60; // *60 to get Revolutions per MINUTE
+
+
+    // update our values to be used next time around
     pastTimes[i]= millis();
     pastEncoderValues[i]=encoderCounts[i];
-    printDouble(rpmValues[0],90000000);
-    //    
-    //   Serial.print("Encoder ");
-    //   Serial.print(i);
-    //   Serial.print(" ");
-    //   Serial.println(velocityValues[i]);
+    //printDouble(rpmValues[0],90000000);
+
   }
-  //double tempRPM;
-  //  Serial.println(encoderCounts[0]-pastEncoderValue);
-  //  Serial.println((millis()-pastTime));
-  //  velocity = (((encoderCounts[0]-pastEncoderValue)*0.08567979964)/((millis()-pastTime)* .001)*.001);
-  //tempRPM = ((((encoderCounts[0]-pastEncoderValue)/2175)/((millis()-pastTime) * .001 ))*60);
-
-  //pastTime = millis();
-  //pastEncoderValue = encoderCounts[0];
-  //  Serial.print("meters per  sec: ");
-  // 
-  //  Serial.println(velocity);
-  //Serial.print("Revolutions per min: ");
-  //Serial.println((tempRPM));
-
-
 }
 
-void pid() {
+void pi() {
 
-  delay(20);
-  
+  //delay(20);
+
   for(int i =0;i<3;i++)
   {
+    // if pi not set to 0 for robot
     if(setpoint[i] != 0)
     {
-    
-      //checkVelocity();
+
+      //updateRPM();
       timeChange[i] = (millis() - lastTime[i]);
       lastTime[i] = millis();
-      
+
       sum[i] = (sum[i] +(error[i]*(double)timeChange[i]));
-    
+
       //sum = sum+error;
       //Serial.println(sum[i]);
       pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]);
-      
+
       if(pwmValue[i] < 0){
         motor(i,pwmValue[i]*-1,1);
       }
       else{
         motor(i,pwmValue[i],0);
       }
-    
+
       error[i] = setpoint[i] -rpmValues[i];
-      Serial.println("---------------------------");
-      Serial.println(i);
-        Serial.print("Error: ");
-        Serial.println(error[i]);
-      Serial.print("Velocity: ");
-      Serial.println(rpmValues[i]);
-      Serial.print("PWM Value: ");
-      Serial.println(pwmValue[i]);
+      // Serial.println("---------------------------");
+      // Serial.println(i);
+      // Serial.print("Error: ");
+      // Serial.println(error[i]);
+      // Serial.print("Velocity: ");
+      // Serial.println(rpmValues[i]);
+      // Serial.print("PWM Value: ");
+      // Serial.println(pwmValue[i]);
     }
     else
     {
@@ -219,7 +206,6 @@ void encoder1_ISR()
   if(!motorDir[1])
   {
     encoderCounts[1]++;
-
   }
   else
   {
@@ -261,11 +247,11 @@ void motor(int motorNumber, int pwm, bool dir)
 void receiveBytes()
 {
   static byte index = 0;
-  char terminator = '\r';
+  char terminator = '\r'; // what tells us our command is done
   while(Serial.available() > 0)
   {
-    rcv_buffer[index] = Serial.read();
-    if(rcv_buffer[index] == terminator)
+    rcv_buffer[index] = Serial.read(); // read in our serial commands
+    if(rcv_buffer[index] == terminator) // main loop for processing our command
     {
       index = 0;
       parseCommand();
@@ -296,7 +282,7 @@ void buffer_Flush(char *ptr)
 
 void parseCommand()
 {
-  char command = rcv_buffer[0];
+  char command = rcv_buffer[0]; // our first byte tells us the command char is equivalent to byte
 
   //uint16_t value = analogRead(INFRARED_SENSOR_0);
   //  double distance = get_IR(value);
@@ -358,15 +344,21 @@ void parseCommand()
     break;
   case 'v':
   case 'V':
+
+    int rpm0;
+    int rpm1;
+    int rpm2;
+    sscanf(&rcv_buffer[1], "%d %d %d \r",&rpm0,&rpm1,&rpm2);
+    Serial.println(rpm0);
+    Serial.println(rpm1);
+    Serial.println(rpm2);
     
-    int wheel;
-    int  velocity;
-    sscanf(&rcv_buffer[1], "%d %d \r",&wheel,&velocity);
-    setpoint[wheel] = (double)velocity/10;
-    Serial.println(wheel);
-    Serial.println((double)velocity/10);
-    Serial.println("itworked");
-    break;
+    setpoint[0] = (double)(rpm0/10);
+    error[0] = 0;
+    setpoint[1] = (double)(rpm1/10);
+    error[1] = 0;
+    setpoint[2] = (double)(rpm2/10);
+    error[2] = 0;
 
   default:
     Serial.println("Error: Serial input incorrect");
@@ -381,19 +373,23 @@ double get_IR(uint16_t value){
   return 4800.0 / (value - 20.0);
 
 }
-void printDouble( double val, unsigned int precision){
-// prints val with number of decimal places determine by precision
-// NOTE: precision is 1 followed by the number of zeros for the desired number of decimial places
-// example: printDouble( 3.1415, 100); // prints 3.14 (two decimal places)
 
-   Serial.print (int(val));  //prints the int part
-   Serial.print("."); // print the decimal point
-   unsigned int frac;
-   if(val >= 0)
-       frac = (val - int(val)) * precision;
-   else
-       frac = (int(val)- val ) * precision;
-   Serial.println(frac,DEC) ;
+
+//supporting function to print doubles precicely 
+void printDouble( double val, unsigned int precision){
+  // prints val with number of decimal places determine by precision
+  // NOTE: precision is 1 followed by the number of zeros for the desired number of decimial places
+  // example: printDouble( 3.1415, 100); // prints 3.14 (two decimal places)
+
+  Serial.print (int(val));  //prints the int part
+  Serial.print("."); // print the decimal point
+  unsigned int frac;
+  if(val >= 0)
+    frac = (val - int(val)) * precision;
+  else
+    frac = (int(val)- val ) * precision;
+  Serial.println(frac,DEC) ;
 } 
+
 
 

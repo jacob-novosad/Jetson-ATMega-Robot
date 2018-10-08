@@ -3,8 +3,8 @@ import math
 import xbox
 import time
 
-ser = serial.Serial('/dev/ttyACM0',115200);
-#joy = xbox.Joystick()
+ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
+joy = xbox.Joystick()
 
 
 
@@ -32,8 +32,12 @@ def motors(m1,m2,m3):
 	#readEncoders()
 def velocityValues(m1,m2,m3):
 	motorValues = [m1,m2,m3]
-	for x in range(3):
-		ser.write(("v %d %d\r" % (x,motorValues[x])).encode()) #turning into int should fix !!!!!!!!!!!!!!!!!!
+	print(motorValues)
+	ser.write(('v %d %d %d \r'  % (motorValues[0],motorValues[1],motorValues[2])).encode())
+	
+	#for x in range(3):
+	#	time.sleep(.5)
+	#	ser.write(('v %d %d \n \r' % (x,motorValues[x])).encode()) #turning into int should fix !!!!!!!!!!!!!!!!!!
 	print("Finished all commands")
 
 
@@ -74,12 +78,19 @@ def xyThetaToWheelV(xd,yd,thetad):
 	print("Wheel0 RPM: " +str(wheel0Velocity))
 	print("Wheel1 RPM: " +str(wheel1Velocity))
 	print("Wheel2 RPM: " +str(wheel2Velocity))
-	velocityValues(int(wheel0Velocity*10),int(wheel1Velocity*10),int(wheel2Velocity*10))
+	wheel0Velocity *= -10
+	wheel1Velocity *= 10
+	wheel2Velocity *= 10
+	
+
+	velocityValues(int(wheel0Velocity),int(wheel1Velocity),int(wheel2Velocity))
 	#motors(100,100,100)
 
 #velocityValues(0,0,0)
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
+
+############## Simple Serial Communicator to Arduino ##############
 #while True:
 #	command = input("Enter Command")
 #	command = command+'\r'
@@ -87,7 +98,9 @@ def xyThetaToWheelV(xd,yd,thetad):
 #	ser.write(command.encode())
 #	print (ser.readline().decode("ascii"))
 
+################ Simple Input Tester Loop ###############
 while True:
+	time.sleep(.3)
 	x = float(input("enter x: "))
 	y = float(input("enter y: "))
 	theta = float(input("enter theta: "))
@@ -95,11 +108,11 @@ while True:
 
 #velocityValues(1800,1800,1800)
 
-
+############### Contoller demo for testing  ################
 #theta = 0
 #while True:
 #	theta = 0
-#	time.sleep(.01)
+#	time.sleep(.2)
 #	if(joy.B()):
 #		joy.close()
 #		motors(0,0,0)
@@ -112,7 +125,7 @@ while True:
 #		theta = joy.rightTrigger()
 #	if(joy.leftTrigger() > 0):
 #		theta= -joy.leftTrigger()
-#	xyThetaToWheelV(-y,-x1/2,theta)
+#	xyThetaToWheelV(-y/1.5,-x1/1.5,theta*2)
 
 
 
