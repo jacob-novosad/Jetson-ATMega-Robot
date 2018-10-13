@@ -1,2 +1,3 @@
 Robot Setup on new Jetson
-- 
+- Move the folder called SimpleTimer in the repo to ~/sketchbook/libraries/
+- sudo apt install python3-serial   (DONT FORGET THE 3)

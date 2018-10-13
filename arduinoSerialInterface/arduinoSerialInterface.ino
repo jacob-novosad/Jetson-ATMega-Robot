@@ -157,7 +157,7 @@ void pi() {
 
       //sum = sum+error;
       //Serial.println(sum[i]);
-      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]); doc
+      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]); 
 
       if(pwmValue[i] < 0){
         motor(i,pwmValue[i]*-1,0);
