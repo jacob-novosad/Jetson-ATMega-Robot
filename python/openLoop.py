@@ -4,7 +4,9 @@ import xbox
 import time
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
-joy = xbox.Joystick()
+ser.reset_input_buffer()
+ser.reset_output_buffer()
+#joy = xbox.Joystick()
 
 
 
@@ -16,6 +18,7 @@ def readEncoders():
 		encoders[x] =  (ser.readline().decode("ascii"))
 		print(encoders[x])
 	return encoders
+
 #def readUltraSound():
 
 #def readInfrared():
@@ -78,7 +81,7 @@ def xyThetaToWheelV(xd,yd,thetad):
 	print("Wheel0 RPM: " +str(wheel0Velocity))
 	print("Wheel1 RPM: " +str(wheel1Velocity))
 	print("Wheel2 RPM: " +str(wheel2Velocity))
-	wheel0Velocity *= -10
+	wheel0Velocity *= 10
 	wheel1Velocity *= 10
 	wheel2Velocity *= 10
 	
@@ -90,7 +93,7 @@ def xyThetaToWheelV(xd,yd,thetad):
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
 
-mode = str(input("Enter mode. s for serial, t for input tester, c for controller"))
+mode = str(input("Enter mode. s for serial, t for input tester, c for controller, g for graph mode "))
 
 if(mode == 's'):
 
@@ -103,18 +106,26 @@ if(mode == 's'):
 elif mode == 't':
 ################ Simple Input Tester Loop ###############
 	while True:
+		yesNo = input("do you want to quit y/n")
+		if(yesNo == 'y'):
+			xyThetaToWheelV(0,0,0)
+			ser.close()
+			quit()
 		time.sleep(.5)
 		x = float(input("enter x: "))
 		y = float(input("enter y: "))
 		theta = float(input("enter theta: "))
+		mytime  = float(input("enter time to run: "))
 		xyThetaToWheelV(x,y,theta)
+		time.sleep(mytime)
+		xyThetaToWheelV(0,0,0)
 
 #velocityValues(1800,1800,1800)
 
 ############### Contoller demo for testing  ################
 
-else:
-
+elif mode == 'c':
+#	joy = xbox.Joystick()
 	theta = 0
 	while True:
 		theta = 0
@@ -134,5 +145,23 @@ else:
 		xyThetaToWheelV(-y/1.5,-x1/1.5,theta*2)
 
 
+###################### GRAPH  ##############################
 
+elif mode == 'g':
+	i=0
+	file = open("sampleText.txt","w")
+#	joy = xbox.JoyStick()
+	while True:
+		command = input("Enter Command")
+		command = command+'\r'
+		ser.write(command.encode())
 
+		while True:
+			if(ser.inWaiting() > 3):
+				myString =ser.readline().decode("ascii")
+				file.write(myString)
+			if(joy.B()):
+				print('quitting')
+				velocityValues(0,0,0)
+				break
+#readline check to make sure serial to read

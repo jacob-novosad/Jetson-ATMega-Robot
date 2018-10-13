@@ -13,7 +13,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 5          //Every # miliseconds we update our rpm of wheels
+#define VELOCITY_TIME 10          //Every # miliseconds we update our rpm of wheels
 
 
 
@@ -25,7 +25,7 @@ bool motorDir[3] = {
 const int motorPWMPins[3]            = {
   8,9,10};
 const int motorDirPins[3]            = {
-  29,27,28};
+  29,28,27};
 const int ultrasonicSensorTrigPins[] = {
   30,32,34,36,38,40};
 const int ultrasonicSensorEchoPins[] = {
@@ -33,8 +33,8 @@ const int ultrasonicSensorEchoPins[] = {
 const int infraredSensorPins[] = {
   0,1,2,3};
 
-double Kp = 3/60;
-double Ki = .1/60;
+double Kp = 0; // 12
+double Ki = .1/60; // .1
 //double Kd = 0;
 
 double sum[3]        = {0,0,0};
@@ -128,7 +128,8 @@ void updateRPM() {
     changeInRevolutions = changeInEncoders/2249;
 
     rpmValues[i] = (changeInRevolutions/(changeInTimeSeconds))*60; // *60 to get Revolutions per MINUTE
-
+    //if(changeInEncoders >0)
+    //Serial.println(changeInEncoders);
 
     // update our values to be used next time around
     pastTimes[i]= millis();
@@ -156,13 +157,13 @@ void pi() {
 
       //sum = sum+error;
       //Serial.println(sum[i]);
-      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]);
+      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]); doc
 
       if(pwmValue[i] < 0){
-        motor(i,pwmValue[i]*-1,1);
+        motor(i,pwmValue[i]*-1,0);
       }
       else{
-        motor(i,pwmValue[i],0);
+        motor(i,pwmValue[i],1);
       }
 
 //      
@@ -171,7 +172,9 @@ void pi() {
 //      Serial.print("Error: ");
 //      Serial.println(error[i]);
 //      Serial.print("Revs PM Value: ");
-//      Serial.println(rpmValues[i]);
+       // Serial.println(rpmValues[i]);
+      // Serial.print(",");
+      //  Serial.println(millis());
 //      Serial.print("PWM Value: ");
 //      Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];
@@ -188,7 +191,7 @@ void pi() {
 void encoder0_ISR() // encoder0 interrupt service routine 
 {
   noInterrupts();
-  if(!motorDir[0])
+  if(motorDir[0])
   {
     encoderCounts[0]++;
 
@@ -202,7 +205,7 @@ void encoder0_ISR() // encoder0 interrupt service routine
 void encoder1_ISR()
 {
   noInterrupts();
-  if(!motorDir[1])
+  if(motorDir[1])
   {
     encoderCounts[1]++;
   }
@@ -215,7 +218,7 @@ void encoder1_ISR()
 void encoder2_ISR()
 {
   noInterrupts();
-  if(!motorDir[2])
+  if(motorDir[2])
   {
     encoderCounts[2]++;
   }
@@ -228,7 +231,7 @@ void encoder2_ISR()
 
 void motor(int motorNumber, int pwm, bool dir)
 {
-
+  //dir = !dir;                              // This is to ensure positive RPM is CCW
   motorDir[motorNumber] = dir;
 
   digitalWrite(motorDirPins[motorNumber],dir);
@@ -348,9 +351,9 @@ void parseCommand()
     int rpm1;
     int rpm2;
     sscanf(&rcv_buffer[1], "%d %d %d \r",&rpm0,&rpm1,&rpm2);
-    Serial.println(rpm0);
-    Serial.println(rpm1);
-    Serial.println(rpm2);
+    //Serial.println(rpm0);
+    //Serial.println(rpm1);
+    //Serial.println(rpm2);
     
     
    for(int i = 0;i<3;i++)
@@ -365,8 +368,8 @@ void parseCommand()
 
     setpoint[2] = (double)(rpm2/10);
 
-  default:
-    Serial.println("Error: Serial input incorrect");
+ // default:
+    //Serial.println("Error: Serial input incorrect");
 
 
   }
