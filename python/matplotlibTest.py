@@ -1,20 +1,32 @@
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib.animation as animation
 
 
-plt.axis([0,60,0,4])
 
-i = 0
+from matplotlib import style
 
-while True:
+style.use('fivethirtyeight')
 
-	i = i+1
-	y=np.random.random()
-	plt.scatter(i,y)
-	plt.pause(.05)
-	if i > 60:
-	plt.axis([0,i,0,4])
+fig = plt.figure()
+axis1= fig.add_subplot(1,1,1)
 
 
+
+def animate(i):
+	graph_data = open('sampleText.txt','r').read()
+	lines = graph_data.split('\n')
+	xs = []
+	ys = []
+	for line in lines:
+		if len(line) > 1:
+			x,y=line.split(',')
+			xs.append(x)
+			ys.append(y)
+	axis1.clear()	
+	axis1.plot(ys,xs)
+
+ani = animation.FuncAnimation(fig, animate, interval=1000)
+plt.xticks(rotation=45, ha='right')
+plt.subplots_adjust(bottom=0.30)
+plt.ylabel('RPM')
 plt.show()
-
