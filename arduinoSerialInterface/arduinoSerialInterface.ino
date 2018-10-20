@@ -365,14 +365,21 @@ void parseCommand()
     
   case 'p':
   case 'P':
+  
+  
     setpoint[0] = 0;
     setpoint[1] = 0;
     setpoint[2] = 0;
     motor(0,0,0);
     motor(1,0,0);
     motor(2,0,0);
-    sscanf(&rcv_buffer[1], " %c \r",&pidSwitch);
-  
+    if(pidSwitch == '1')
+    pidSwitch = '0';
+    else
+    pidSwitch = '1';
+    
+    Serial.println(pidSwitch);
+
    break;
 
 

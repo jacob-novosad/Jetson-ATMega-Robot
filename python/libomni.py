@@ -12,6 +12,7 @@ time.sleep(1)
 ser.reset_input_buffer()
 ser.reset_output_buffer()
 
+pid = 0;
 
 
 # This functions sends  pwm signals to the motor and reverses the direction if given negative
@@ -43,8 +44,34 @@ def infrared(infraredNum):
 	return infraredValue.rstrip()
 
 
+def rpm(rpmNum):
+	ser.write(("r %f \r" % (rpmNum)).encode())
+	#time.sleep(.1)
+	rpmValue = (ser.readline().decode("ascii"))
+	return rpmValue.rstrip()
+
+def enablePID(pidValue):
+	pid = pidValue
+	ser.write(("p %d \r" % (pid)).encode())
+
+	#time.sleep(.1)
+
+
+
+
+
+
+# assume PID is always off
+
+enablePID(0)
+
+motors(0,0,255)
+
+
 while True:
-	print(infrared(0))
+	print(rpm(0))
+	print(rpm(1))
+	print(rpm(2))
 
 
-motors(0,0,0)
+
