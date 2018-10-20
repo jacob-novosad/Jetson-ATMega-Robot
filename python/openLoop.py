@@ -4,6 +4,10 @@ import xbox
 import time
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
+
+while(ser.isOpen() == False):
+	time.sleep(.001)
+
 ser.reset_input_buffer()
 ser.reset_output_buffer()
 #joy = xbox.Joystick()
@@ -92,6 +96,7 @@ def xyThetaToWheelV(xd,yd,thetad):
 #velocityValues(0,0,0)
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
+readEncoders()
 
 mode = str(input("Enter mode. s for serial, t for input tester, c for controller, g for graph mode "))
 
@@ -103,6 +108,7 @@ if(mode == 's'):
 		command = command+'\r'
 		ser.write(command.encode())
 		print (ser.readline().decode("ascii"))
+		
 elif mode == 't':
 ################ Simple Input Tester Loop ###############
 	while True:

@@ -65,6 +65,7 @@ void updateRPM();
 double changeInEncoders;
 double changeInRevolutions;
 double changeInTimeSeconds;
+char pidSwitch = '1';
 
 
 
@@ -114,7 +115,11 @@ void loop() {
   receiveBytes();
 
   // proportional integral controller
-  pi();
+
+  if(pidSwitch == '1')
+  {
+    pi();
+  }
 
 }
 
@@ -322,12 +327,7 @@ void parseCommand()
     duration = pulseIn(ultrasonicSensorEchoPins[ultrasonicNumber], HIGH);
     cm = (duration/2) / 29.1;
     inches = (duration/2) / 74; 
-
-    Serial.print(inches);
-    Serial.print("in, ");
-    Serial.print(cm);
-    Serial.print("cm");
-    Serial.println();
+    Serial.println(cm);
     break;
 
   case 'i':
@@ -339,10 +339,7 @@ void parseCommand()
     sscanf(&rcv_buffer[1], " %d \r",&ultrasonicNumber);
     value = analogRead(ultrasonicNumber);
     distance = get_IR(value);
-
-    Serial.print (distance);
-    Serial.println (" cm");
-    Serial.println ();
+    Serial.println (distance);
     break;
   case 'v':
   case 'V':
@@ -354,19 +351,30 @@ void parseCommand()
     //Serial.println(rpm0);
     //Serial.println(rpm1);
     //Serial.println(rpm2);
-    
-    
+
    for(int i = 0;i<3;i++)
    {
 //      error[i] = 0;
       sum[i]   = 0;
     }
-
+    
     setpoint[0] = (double)(rpm0/10);
-
     setpoint[1] = (double)(rpm1/10);
-
     setpoint[2] = (double)(rpm2/10);
+    break;
+    
+  case 'p':
+  case 'P':
+    setpoint[0] = 0;
+    setpoint[1] = 0;
+    setpoint[2] = 0;
+    motor(0,0,0);
+    motor(1,0,0);
+    motor(2,0,0);
+    sscanf(&rcv_buffer[1], " %c \r",&pidSwitch);
+  
+   break;
+
 
  // default:
     //Serial.println("Error: Serial input incorrect");
