@@ -373,13 +373,15 @@ void parseCommand()
     motor(0,0,0);
     motor(1,0,0);
     motor(2,0,0);
-    if(pidSwitch == '1')
-    pidSwitch = '0';
-    else
-    pidSwitch = '1';
-    
+    sscanf(&rcv_buffer[1], " %c \r",&pidSwitch);
     Serial.println(pidSwitch);
-
+    break;
+    
+  case 'r':
+  case 'R':
+    int rpmNum;
+    sscanf(&rcv_buffer[1], " %d \r",&rpmNum);
+    printDouble(rpmValues[rpmNum],1000000000);
    break;
 
 
