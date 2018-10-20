@@ -146,8 +146,8 @@ void pi() {
   for(int i =0;i<3;i++)
   {
     // if pi not set to 0 for robot
-    if(setpoint[i] != 0)
-    {
+//    if(setpoint[i] != 0)
+//    {
       
       //updateRPM();
       timeChange[i] = (millis() - lastTime[i]);
@@ -179,12 +179,12 @@ void pi() {
 //      Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];
       
-    }
-    else
-    {
-      error[i] = 0;
-      motor(i,0,0);
-    }
+//    }
+//    else
+//    {
+//      error[i] = 0;
+//      motor(i,0,0);
+//    }
   }
 }
 
