@@ -2,11 +2,11 @@ import serial
 import math
 import xbox
 import time
+import numpy as np
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
 
-while(ser.isOpen() == False):
-	time.sleep(.001)
+time.sleep(1)
 
 ser.reset_input_buffer()
 ser.reset_output_buffer()
@@ -74,23 +74,36 @@ def velocityToPWM(velocity):
 
 
 def xyThetaToWheelV(xd,yd,thetad):
-	wheel0Velocity=0
-	wheel1Velocity=0
-	wheel2Velocity=0
 
-	wheel0Velocity = ((318.3099*yd) - (60.4789* thetad));
-	wheel1Velocity = ((275.6644*xd) - (159.1549*yd) - (60.4789* thetad));
-	wheel2Velocity = ((-275.6644 * xd) - (159.1549 * yd) - (60.4789 * thetad));
+	r = 0.03 # radius of each wheel [m]
+	l = 0.19 # distance from each wheel to the point of reference [m]
+ 
+	xd_des = xd # velocity in the x-direction in the local frame [m/s]
+	yd_des = yd # velocity in the y-direction in the local frame [m/s]
+	thd_des = thetad # velocity in the x-direction in the local frame [rad/sa]
+ 
+	vel_des = np.array([xd_des,yd_des,thd_des])[:,None]
+ 
+	FK_M = (2*np.pi*r/60)*np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3) # Forward kinematics matrix
+ 
+	IK_M = np.linalg.inv(FK_M) # Inverse kinematics matrix
+ 
+	motor_spd_vec = np.dot(IK_M,vel_des)
+ 
+	wheel1RPM = motor_spd_vec[0] # motor 2 speed [rpm]
+	wheel0RPM = motor_spd_vec[1] # motor 1 speed [rpm]
+	wheel2RPM = motor_spd_vec[2] # motor 3 speed [rpm]
 
-	print("Wheel0 RPM: " +str(wheel0Velocity))
-	print("Wheel1 RPM: " +str(wheel1Velocity))
-	print("Wheel2 RPM: " +str(wheel2Velocity))
-	wheel0Velocity *= 10
-	wheel1Velocity *= 10
-	wheel2Velocity *= 10
+
+	print("Wheel0 RPM: " +str(wheel0RPM))
+	print("Wheel1 RPM: " +str(wheel1RPM))
+	print("Wheel2 RPM: " +str(wheel2RPM))
+	wheel0RPM *= 10
+	wheel1RPM *= 10
+	wheel2RPM *= 10
 	
 
-	velocityValues(int(wheel0Velocity),int(wheel1Velocity),int(wheel2Velocity))
+	velocityValues(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
 	#motors(100,100,100)
 
 #velocityValues(0,0,0)

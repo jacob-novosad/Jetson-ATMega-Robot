@@ -27,36 +27,30 @@ def motors(m1,m2,m3):
 #read encoder value from motor number given
 def encoder(encoderNum):
 	ser.write(("e %d \r" % (encoderNum)).encode())
-	#time.sleep(.1)
+	
 	encoderValue = (ser.readline().decode("ascii"))
 	return encoderValue.rstrip()
 
 def ultraSound(ultraSoundNum):
 	ser.write(("u %d \r" % (ultraSoundNum)).encode())
-	#time.sleep(.1)
 	ultraSoundValue = (ser.readline().decode("ascii"))
+
 	return ultraSoundValue.rstrip()
 
 def infrared(infraredNum):
 	ser.write(("i %d \r" % (infraredNum)).encode())
-	#time.sleep(.1)
 	infraredValue = (ser.readline().decode("ascii"))
 	return infraredValue.rstrip()
 
 
 def rpm(rpmNum):
 	ser.write(("r %f \r" % (rpmNum)).encode())
-	#time.sleep(.1)
 	rpmValue = (ser.readline().decode("ascii"))
 	return rpmValue.rstrip()
 
 def enablePID(pidValue):
 	pid = pidValue
 	ser.write(("p %d \r" % (pid)).encode())
-
-	#time.sleep(.1)
-
-
 
 
 
@@ -65,13 +59,5 @@ def enablePID(pidValue):
 
 enablePID(0)
 
-motors(0,0,255)
-
-
-while True:
-	print(rpm(0))
-	print(rpm(1))
-	print(rpm(2))
-
-
+motors(0,0,0)
 
