@@ -1,6 +1,7 @@
 import serial
 import math
 import time
+import numpy as np
 
 #sets up serial connection to arduino atMega
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.2);
@@ -23,6 +24,9 @@ def motors(m1,m2,m3):
 	for x in range(3):
 		ser.write(("m %d %d %d\r" % (x, abs(motorValues[x]), int(motorValues[x]>=0))).encode())
 
+def motorVelocity(m1,m2,m3):
+	motorV= [m1*10,m2*10,m3*10]
+	ser.write(("v %d %d %d \r" %(motorV[0],motorV[1],motorV[2])).encode())
 
 #read encoder value from motor number given
 def encoder(encoderNum):
@@ -51,6 +55,38 @@ def rpm(rpmNum):
 def enablePID(pidValue):
 	pid = pidValue
 	ser.write(("p %d \r" % (pid)).encode())
+
+def moveXYTheta(xd,yd,thetad):
+
+	r = 0.03 # radius of each wheel [m]
+	l = 0.19 # distance from each wheel to the point of reference [m]
+ 
+	xd_des = xd # velocity in the x-direction in the local frame [m/s]
+	yd_des = yd # velocity in the y-direction in the local frame [m/s]
+	thd_des = thetad # velocity in the x-direction in the local frame [rad/sa]
+ 
+	vel_des = np.array([xd_des,yd_des,thd_des])[:,None]
+ 
+	FK_M = (2*np.pi*r/60)*np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3) # Forward kinematics matrix
+ 
+	IK_M = np.linalg.inv(FK_M) # Inverse kinematics matrix
+ 
+	motor_spd_vec = np.dot(IK_M,vel_des)
+ 
+	wheel1RPM = motor_spd_vec[0] # motor 2 speed [rpm]
+	wheel0RPM = motor_spd_vec[1] # motor 1 speed [rpm]
+	wheel2RPM = motor_spd_vec[2] # motor 3 speed [rpm]
+
+
+	print("Wheel0 RPM: " +str(wheel0RPM))
+	print("Wheel1 RPM: " +str(wheel1RPM))
+	print("Wheel2 RPM: " +str(wheel2RPM))
+	#wheel0RPM *= 10
+	#wheel1RPM *= 10
+	#wheel2RPM *= 10
+	
+
+	motorVelocity(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
 
 
 

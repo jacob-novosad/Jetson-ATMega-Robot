@@ -9,23 +9,28 @@ import time
 # PWM signal of atleast 55-60 to get the motor started
 robot.motors(0,0,0)
 
-time.sleep(1)
+#time.sleep(1)
+
+
+robot.enablePID(1)
+
+robot.moveXYTheta(0,0,0)
 #for x in range(6):
 #	print("encoder: "+robot.encoder(1)) # reads encoder value for wheel 2 (remember 0 is motor 1 and 1 is motor 2
 #	print("rpm: "+ robot.rpm(1))     # reads rpm value by taking the change in encoder values over time 
 #	time.sleep(.2)
-uori = input ("u or i ")
-senNum = int(input(" sensor number please "))
-sleepTime= float(input("sleep time "))
+#uori = input ("u or i ")
+#senNum = int(input(" sensor number please "))
+#sleepTime= float(input("sleep time "))
 
 
 
-while True:
-	if(uori == 'i'):
-		print("Infrared : "+robot.infrared(senNum))
-	else:
-		print("Ultrasound  : "+robot.ultraSound(senNum))
-	time.sleep(sleepTime)
+#while True:
+#	if(uori == 'i'):
+#		print("Infrared : "+robot.infrared(senNum))
+#	else:
+#		print("Ultrasound  : "+robot.ultraSound(senNum))
+#	time.sleep(sleepTime)
 
 
 

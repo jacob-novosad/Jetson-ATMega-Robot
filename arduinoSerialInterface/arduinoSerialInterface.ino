@@ -336,8 +336,8 @@ void parseCommand()
     int infraredNumber;
     double distance;
 
-    sscanf(&rcv_buffer[1], " %d \r",&ultrasonicNumber);
-    value = analogRead(ultrasonicNumber);
+    sscanf(&rcv_buffer[1], " %d \r",&infraredNumber);
+    value = analogRead(infraredNumber);
     distance = get_IR(value);
     Serial.println (distance);
     break;
