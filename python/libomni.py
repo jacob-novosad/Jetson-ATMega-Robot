@@ -30,24 +30,27 @@ def motorVelocity(m1,m2,m3):
 
 #read encoder value from motor number given
 def encoder(encoderNum):
+	ser.reset_input_buffer()
 	ser.write(("e %d \r" % (encoderNum)).encode())
 	
 	encoderValue = (ser.readline().decode("ascii"))
 	return encoderValue.rstrip()
 
-def ultraSound(ultraSoundNum):
+def ultrasound(ultraSoundNum):
+	#ser.reset_input_buffer()
 	ser.write(("u %d \r" % (ultraSoundNum)).encode())
 	ultraSoundValue = (ser.readline().decode("ascii"))
-
 	return ultraSoundValue.rstrip()
 
 def infrared(infraredNum):
+	ser.reset_input_buffer()
 	ser.write(("i %d \r" % (infraredNum)).encode())
 	infraredValue = (ser.readline().decode("ascii"))
 	return infraredValue.rstrip()
 
 
 def rpm(rpmNum):
+	ser.reset_input_buffer()
 	ser.write(("r %f \r" % (rpmNum)).encode())
 	rpmValue = (ser.readline().decode("ascii"))
 	return rpmValue.rstrip()
@@ -93,7 +96,5 @@ def moveXYTheta(xd,yd,thetad):
 
 # assume PID is always off
 
-enablePID(0)
 
-motors(0,0,0)
 

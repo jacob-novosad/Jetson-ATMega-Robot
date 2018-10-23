@@ -1,3 +1,4 @@
+
 #include <HardwareSerial.h>
 #include <SimpleTimer.h>
 
@@ -316,17 +317,19 @@ void parseCommand()
   case 'U':
     int ultrasonicNumber;
     long duration,cm,inches;
+     
     sscanf(&rcv_buffer[1], " %d \r",&ultrasonicNumber);
 
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], LOW);
-    delayMicroseconds(5);
+    //delayMicroseconds(5);
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], HIGH);
     delayMicroseconds(10);
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], LOW);
 
     duration = pulseIn(ultrasonicSensorEchoPins[ultrasonicNumber], HIGH);
     cm = (duration/2) / 29.1;
-    inches = (duration/2) / 74; 
+    //Serial.println(duration);
+    //inches = (duration/2) / 74; 
     Serial.println(cm);
     break;
 
@@ -374,7 +377,6 @@ void parseCommand()
     motor(1,0,0);
     motor(2,0,0);
     sscanf(&rcv_buffer[1], " %c \r",&pidSwitch);
-    Serial.println(pidSwitch);
     break;
     
   case 'r':
