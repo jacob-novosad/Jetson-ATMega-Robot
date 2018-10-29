@@ -111,7 +111,7 @@ def odemetryCalcd(xk,yk,theatk,dt,rpm1,rpm2,rpm3):
 	r = 0.03 # radius of each wheel [m]
 	l = 0.19 # distance from each wheel to the point of reference [m]
 
-	kinematic1 = np.matrix(np.sqrt[1/3,0,-1/3],[-1/3,2/3,-1/3],[-1/3l,-1/3l,-1/3l])
+	kinematic1 = np.matrix((np.sqrt[1/3,0,-1/3]),[-1/3,2/3,-1/3],[-1/3*l,-1/3*l,-1/3*l])
 		
 	rotationMatrix= np.matrix([np.cos(thetak),-np.sin(thetak),0],[np.sin(thetak),cos(thetak),0],[0,0,1])
 	

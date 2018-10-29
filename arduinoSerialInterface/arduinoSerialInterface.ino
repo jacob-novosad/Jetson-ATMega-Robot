@@ -316,17 +316,32 @@ void parseCommand()
   case 'u':
   case 'U':
     int ultrasonicNumber;
-    long duration,cm,inches;
-     
+    long duration,cm,start;
+    duration = -60; 
     sscanf(&rcv_buffer[1], " %d \r",&ultrasonicNumber);
-
+    Serial.println(digitalRead(ultrasonicSensorEchoPins[ultrasonicNumber]));
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], LOW);
     //delayMicroseconds(5);
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], HIGH);
     delayMicroseconds(10);
     digitalWrite(ultrasonicSensorTrigPins[ultrasonicNumber], LOW);
-
-    duration = pulseIn(ultrasonicSensorEchoPins[ultrasonicNumber], HIGH);
+    start = micros();
+    
+    while(digitalRead(ultrasonicSensorEchoPins[ultrasonicNumber]) == LOW);
+    start = micros();
+    
+    while(micros()-start <= 10000)
+    {
+      if(digitalRead(ultrasonicSensorEchoPins[ultrasonicNumber]) == LOW)
+      {
+        duration = micros()-start;
+        break;
+      }
+      //duration = micros()-start;
+    }
+    
+    
+    //duration = pulseIn(ultrasonicSensorEchoPins[ultrasonicNumber], HIGH);
     cm = (duration/2) / 29.1;
     //Serial.println(duration);
     //inches = (duration/2) / 74; 
