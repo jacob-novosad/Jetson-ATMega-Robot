@@ -106,6 +106,20 @@ def xyThetaToWheelV(xd,yd,thetad):
 	velocityValues(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
 	#motors(100,100,100)
 
+
+def odemetryCalcd(xk,yk,theatk,dt,rpm1,rpm2,rpm3):
+	r = 0.03 # radius of each wheel [m]
+	l = 0.19 # distance from each wheel to the point of reference [m]
+
+	kinematic1 = np.matrix(np.sqrt[1/3,0,-1/3],[-1/3,2/3,-1/3],[-1/3l,-1/3l,-1/3l])
+		
+	rotationMatrix= np.matrix([np.cos(thetak),-np.sin(thetak),0],[np.sin(thetak),cos(thetak),0],[0,0,1])
+	
+	D1=rpm1*((2*np.pi*r)/60)*dt
+	D2=rpm2*((2*np.pi*r)/60)*dt
+	D3=rpm3*((2*np.pi*r)/60)*dt
+	Dmatrix = np.matrix([D1],[D2],[D3])
+
 #velocityValues(0,0,0)
 #xyThetaToWheelV(0,0,0)
 #readEncoders()

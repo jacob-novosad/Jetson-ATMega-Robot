@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 #sets up serial connection to arduino atMega
-ser = serial.Serial('/dev/ttyACM0',115200, timeout=.2);
+ser = serial.Serial('/dev/ttyACM0',115200, timeout=.4);
 
 #wait for serial connection to be established
 time.sleep(1)
@@ -40,7 +40,7 @@ def ultrasound(ultraSoundNum):
 	#ser.reset_input_buffer()
 	ser.write(("u %d \r" % (ultraSoundNum)).encode())
 	ultraSoundValue = (ser.readline().decode("ascii"))
-	return ultraSoundValue.rstrip()
+	return int(ultraSoundValue.rstrip())
 
 def infrared(infraredNum):
 	ser.reset_input_buffer()
@@ -92,7 +92,7 @@ def moveXYTheta(xd,yd,thetad):
 	motorVelocity(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
 
 
-
+	
 
 # assume PID is always off
 
