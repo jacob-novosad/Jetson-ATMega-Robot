@@ -134,3 +134,5 @@ class minIMU(LIS3MDL, LSM6DS33):
     def getIMUFil(self):
         """  Returns a vector (list) of IMU measurements. """
         return self.getAccelFil() + self.getGyroFil()
+
+

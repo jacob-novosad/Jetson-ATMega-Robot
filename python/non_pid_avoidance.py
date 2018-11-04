@@ -40,19 +40,19 @@ while True:
 		turn(.6,60)
 		count=0
 	if(us[2] <=15):
-		turn(0,60)
+		turn(0,55)
 		count +=1 
 	elif(us[1] <= 29):
-		turn(0,60)
+		turn(0,55)
 		count +=1 
 	elif(us[3] <=29):
-		turn(0,-60)
+		turn(0,-55)
 		count +=1 
-	elif(us[0] <= 7):
-		turn(0,60)
+	elif(us[0] <= 10):
+		turn(0,55)
 		count +=1 
-	elif(us[4] <= 7):
-		turn(0,-60)
+	elif(us[4] <= 10):
+		turn(0,-55)
 		count +=1 
 	else:
 		forward(0,60)

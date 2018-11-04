@@ -3,6 +3,7 @@ import math
 import xbox
 import time
 import numpy as np
+import libomni
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
 
@@ -15,13 +16,17 @@ ser.reset_output_buffer()
 
 
 
-def readEncoders():
-	encoders =  [None] *3
-	for x in range(3):
-		ser.write( ("e %d\r" % (x) ).encode())
-		encoders[x] =  (ser.readline().decode("ascii"))
-		print(encoders[x])
-	return encoders
+
+def readEncoder(encoderNum):
+	ser.reset_input_buffer()
+	ser.write(("e %d \r" % (encoderNum)).encode())
+	
+	encoderValue = (ser.readline().decode("ascii"))
+	return encoderValue.rstrip()
+
+oldE0 = readEncoder(0)
+oldeE1 = readEncoder(1)
+oldeE2 = readEncoder(2)
 
 #def readUltraSound():
 
@@ -107,23 +112,32 @@ def xyThetaToWheelV(xd,yd,thetad):
 	#motors(100,100,100)
 
 
-def odemetryCalcd(xk,yk,theatk,dt,rpm1,rpm2,rpm3):
+def odemetryCalc(xk,yk,theatk,encoder0k,encoder1k,encoder2k):
 	r = 0.03 # radius of each wheel [m]
 	l = 0.19 # distance from each wheel to the point of reference [m]
 
-	kinematic1 = np.matrix((np.sqrt[1/3,0,-1/3]),[-1/3,2/3,-1/3],[-1/3*l,-1/3*l,-1/3*l])
+	kinematic_mat = np.matrix((np.sqrt[1/3,0,-1/3]),[-1/3,2/3,-1/3],[-1/(3*l),-1/(3*l),-1/(3*l)])
 		
-	rotationMatrix= np.matrix([np.cos(thetak),-np.sin(thetak),0],[np.sin(thetak),cos(thetak),0],[0,0,1])
-	
-	D1=rpm1*((2*np.pi*r)/60)*dt
-	D2=rpm2*((2*np.pi*r)/60)*dt
-	D3=rpm3*((2*np.pi*r)/60)*dt
-	Dmatrix = np.matrix([D1],[D2],[D3])
+	rotation_mat= np.matrix([np.cos(thetak),-np.sin(thetak),0],[np.sin(thetak),cos(thetak),0],[0,0,1])
+	#   diffrence in ticks (rpm1)
+	oldE0 = readEncoder(0)
+	oldE1 = readEncoder(1)
+	oldE2 = readEncoder(2)
+	D1=(oldE0-encoder0k)*((2*np.pi*r))
+	D2=(oldE1-encoder1k)*((2*np.pi*r))
+	D3=(oldE2-encoder2sk)*((2*np.pi*r))
+	distance_mat = np.matrix([D1],[D2],[D3])
+
+	oldPos_mat = np.matrix([xk],[yk],[thetak])
+
+	newPos_mat = oldPos_mat + (kinematic_mat*rotation_mat*distance_mat)
+	print(newPos_mat)
+	odemetryCalc(newPos_mat.item(0),newPos_mat.item(1),newPos_mat.item(2),oldE0,oldE0,oldE1,oldE2)
 
 #velocityValues(0,0,0)
 #xyThetaToWheelV(0,0,0)
 #readEncoders()
-readEncoders()
+
 
 mode = str(input("Enter mode. s for serial, t for input tester, c for controller, g for graph mode "))
 
@@ -158,11 +172,11 @@ elif mode == 't':
 ############### Contoller demo for testing  ################
 
 elif mode == 'c':
-#	joy = xbox.Joystick()
+	joy = xbox.Joystick()
 	theta = 0
 	while True:
 		theta = 0
-		time.sleep(.3)
+		time.sleep(0)
 		if(joy.B()):
 			joy.close()
 			motors(0,0,0)
@@ -171,30 +185,51 @@ elif mode == 'c':
 		(x1,y1) = joy.rightStick()
 		print("x: "+str(y))
 		print("y: "+str(x1))
-		if(joy.rightTrigger() > 0):
-			theta = joy.rightTrigger()
-		if(joy.leftTrigger() > 0):
-			theta= -joy.leftTrigger()
-		xyThetaToWheelV(-y/1.5,-x1/1.5,theta*2)
+	
+		xyThetaToWheelV(y/1.5,-x/1.5,x1*np.pi)
 
 
 ###################### GRAPH  ##############################
 
 elif mode == 'g':
-	i=0
-	file = open("sampleText.txt","w")
+	count = 0
+	pid = 1	
+	i = 0	
 #	joy = xbox.JoyStick()
 	while True:
 		command = input("Enter Command")
 		command = command+'\r'
 		ser.write(command.encode())
-
+		myString = [0]
 		while True:
-			if(ser.inWaiting() > 3):
-				myString =ser.readline().decode("ascii")
-				file.write(myString)
-			if(joy.B()):
+			if(ser.inWaiting() > 3):				
+				file = open("graph_data.txt","a+")
+				myString = (ser.readline().decode("ascii"))
+				print (myString)
+				file.writelines(myString)
+				count = count + 1
+			if (count > 5000):
 				print('quitting')
 				velocityValues(0,0,0)
+				file.close()
 				break
-#readline check to make sure serial to read
+#			if(joy.B()):
+#				print('quitting')
+#				velocityValues(0,0,0)
+#				break
+elif mode == 'o':
+	xyThetaToWheelV(.5,0,0)
+	odemetryCalc(0,0,0,readEncoder(0),readEncoder(1),readEncoder(2))
+	
+	count = 0
+	while True:
+		count = 0
+		
+		
+
+
+
+
+
+
+

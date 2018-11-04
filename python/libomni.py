@@ -59,7 +59,7 @@ def enablePID(pidValue):
 	pid = pidValue
 	ser.write(("p %d \r" % (pid)).encode())
 
-def moveXYTheta(xd,yd,thetad):
+def move(xd,yd,thetad):
 
 	r = 0.03 # radius of each wheel [m]
 	l = 0.19 # distance from each wheel to the point of reference [m]
