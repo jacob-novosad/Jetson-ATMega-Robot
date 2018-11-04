@@ -5,7 +5,7 @@ import time
 import numpy as np
 import libomni
 
-ser = serial.Serial('/dev/ttyACM0',115200, timeout=.1);
+ser = serial.Serial('/dev/ttyACM0',115200, timeout=.4);
 
 time.sleep(1)
 
@@ -22,11 +22,16 @@ def readEncoder(encoderNum):
 	ser.write(("e %d \r" % (encoderNum)).encode())
 	
 	encoderValue = (ser.readline().decode("ascii"))
-	return encoderValue.rstrip()
+	#print(encoderValue)
+	data = float(encoderValue.strip())
+	#print(data)
+	return data
 
-oldE0 = readEncoder(0)
-oldeE1 = readEncoder(1)
-oldeE2 = readEncoder(2)
+def PIValues(Kp,Ki):
+	ser.reset_input_buffer()
+	ser.write(("k %s %s \r" % (Kp,Ki)).encode())
+
+
 
 #def readUltraSound():
 
@@ -50,7 +55,7 @@ def velocityValues(m1,m2,m3):
 	#for x in range(3):
 	#	time.sleep(.5)
 	#	ser.write(('v %d %d \n \r' % (x,motorValues[x])).encode()) #turning into int should fix !!!!!!!!!!!!!!!!!!
-	print("Finished all commands")
+	#print("Finished all commands")
 
 
 theta = 0
@@ -112,27 +117,32 @@ def xyThetaToWheelV(xd,yd,thetad):
 	#motors(100,100,100)
 
 
-def odemetryCalc(xk,yk,theatk,encoder0k,encoder1k,encoder2k):
-	r = 0.03 # radius of each wheel [m]
-	l = 0.19 # distance from each wheel to the point of reference [m]
+def odemetryCalc(xk,yk,thetak,D0,D1,D2,l=0.19):
 
-	kinematic_mat = np.matrix((np.sqrt[1/3,0,-1/3]),[-1/3,2/3,-1/3],[-1/(3*l),-1/(3*l),-1/(3*l)])
+
+	kinematic_mat = np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3)
 		
-	rotation_mat= np.matrix([np.cos(thetak),-np.sin(thetak),0],[np.sin(thetak),cos(thetak),0],[0,0,1])
+	rotation_mat= np.array([np.cos(thetak),-np.sin(thetak),0,np.sin(thetak),np.cos(thetak),0,0,0,1]).reshape(3,3)
 	#   diffrence in ticks (rpm1)
-	oldE0 = readEncoder(0)
-	oldE1 = readEncoder(1)
-	oldE2 = readEncoder(2)
-	D1=(oldE0-encoder0k)*((2*np.pi*r))
-	D2=(oldE1-encoder1k)*((2*np.pi*r))
-	D3=(oldE2-encoder2sk)*((2*np.pi*r))
-	distance_mat = np.matrix([D1],[D2],[D3])
+	
 
-	oldPos_mat = np.matrix([xk],[yk],[thetak])
+	
+	distance_mat = np.array([D0,D1,D2])[:,None]
 
-	newPos_mat = oldPos_mat + (kinematic_mat*rotation_mat*distance_mat)
-	print(newPos_mat)
-	odemetryCalc(newPos_mat.item(0),newPos_mat.item(1),newPos_mat.item(2),oldE0,oldE0,oldE1,oldE2)
+	oldPos_mat = np.array([xk,yk,thetak])[:,None]
+	# np.dot explanation https://stackoverflow.com/questions/21562986/numpy-matrix-vector-multiplication
+	kinxrot = np.dot(kinematic_mat,rotation_mat)
+	newPos_mat = oldPos_mat + np.dot(kinxrot,distance_mat)
+	return  newPos_mat
+
+
+def DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2, r=0.03, N=2249):
+	D0=(deltaEncoder0/N)*((2*np.pi*r))
+	D1=(deltaEncoder1/N)*((2*np.pi*r))
+	D2=(deltaEncoder2/N)*((2*np.pi*r))
+	return np.array([D0,D1,D2])
+
+
 
 #velocityValues(0,0,0)
 #xyThetaToWheelV(0,0,0)
@@ -200,8 +210,8 @@ elif mode == 'g':
 		command = input("Enter Command")
 		command = command+'\r'
 		ser.write(command.encode())
-		myString = [0]
 		while True:
+			myString = [0]
 			if(ser.inWaiting() > 3):				
 				file = open("graph_data.txt","a+")
 				myString = (ser.readline().decode("ascii"))
@@ -218,13 +228,56 @@ elif mode == 'g':
 #				velocityValues(0,0,0)
 #				break
 elif mode == 'o':
-	xyThetaToWheelV(.5,0,0)
-	odemetryCalc(0,0,0,readEncoder(0),readEncoder(1),readEncoder(2))
-	
-	count = 0
 	while True:
-		count = 0
+		timer = input("Enter time to run: ")
+		x = float(input("enter x: "))
+		y = float(input("enter y: "))
+		theta = float(input("enter theta: "))
+		start = time.time()
+		xyThetaToWheelV(x,y,theta)
+		oldEncoder0 = readEncoder(0)
+		oldEncoder1 = readEncoder(1)
+		oldEncoder2 = readEncoder(2)
+	
+		old_x = 0
+		old_y = 0
+		old_t = 0
+		xyThetaToWheelV(.45,0,0)
+		while True:
+			newEncoder0 = readEncoder(0)
+			newEncoder1 = readEncoder(1)
+			newEncoder2 = readEncoder(2)
+			deltaEncoder0 = newEncoder0 - oldEncoder0
+			deltaEncoder1 = newEncoder1 - oldEncoder1
+			deltaEncoder2 = newEncoder2 - oldEncoder2
+			Ds=DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2)
+			D0 = Ds.item(0)
+			D1 = Ds.item(1)
+			D2 = Ds.item(2)
 		
+			pose = odemetryCalc(old_x,old_y,old_t,D0,D1,D2)
+			print(pose)
+			old_x=pose.item(0)
+			old_y=pose.item(1)
+			old_t=pose.item(2)
+			oldEncoder0 = newEncoder0
+			oldEncoder1 = newEncoder1
+			oldEncoder2 = newEncoder2
+			if time.time()-float(start) >= float(timer):
+				xyThetaToWheelV(0,0,0)
+				break
+			
+				
+		
+elif mode == 'p':
+	while True:
+		p = input("enter Kp: ")
+		i = input("enter Ki: ")
+		x = float(input("enter x: "))
+		y = float(input("enter y: "))
+		theta = float(input("enter theta: "))
+		PIValues(p,i)
+		xyThetaToWheelV(x,y,theta)
 		
 
 

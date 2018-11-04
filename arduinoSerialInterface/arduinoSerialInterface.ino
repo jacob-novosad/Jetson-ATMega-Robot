@@ -179,7 +179,7 @@ void pi() {
 //      Serial.print("Error: ");
 //      Serial.println(error[i]);
  //     Serial.print("Revs PM Value: ");
-        Serial.println(rpmValues[i]);
+        //Serial.println(rpmValues[i]);
       //Serial.print(",");
       //Serial.print(millis()*0.001);
    //   Serial.print("PWM Value: ");
@@ -301,10 +301,11 @@ void parseCommand()
   case 'E':
   case 'e':
     int encoderNum;
-    buffer_Flush(TXBuffer);
     sscanf(&rcv_buffer[1], " %d \r",&encoderNum);
+    long counts;
+    counts = encoderCounts[encoderNum];
     //itoa(encoderCounts[encoderNum],TXBuffer,10);   // serial.print can not handle printing a 64bit int so we turn it  into a string
-    Serial.println(encoderCounts[encoderNum]);
+    Serial.println(counts);
     break;
   case 'M':
   case 'm':
@@ -410,6 +411,22 @@ void parseCommand()
     sscanf(&rcv_buffer[1], " %d \r",&rpmNum);
     printDouble(rpmValues[rpmNum],1000000000);
    break;
+  case 'k':
+  case 'K':
+     char  pValue[20];
+     char  iValue[20];
+     sscanf(&rcv_buffer[1], " %s %s \r",&pValue,&iValue);
+     Serial.println(pValue);
+     Serial.println(iValue);
+     char *ptr;
+     Kp = strtod(pValue,&ptr);
+     Ki = strtod(iValue,&ptr);
+     Serial.println(Kp);
+     Serial.println(Ki);
+     //Ki = iValue.toDouble();
+     //Kp = pValue;
+     //Ki = iValue;
+     break;
 
 
  // default:
