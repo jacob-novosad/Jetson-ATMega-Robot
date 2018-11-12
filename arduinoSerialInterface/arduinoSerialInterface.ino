@@ -35,7 +35,7 @@ const int infraredSensorPins[] = {
   0,1,2,3};
 
 double Kp = 1; // 12
-double Ki = .01; // .1
+double Ki = .007; // .1
 //double Kd = 0;
 
 double sum[3]        = {0,0,0};
@@ -179,9 +179,9 @@ void pi() {
 //      Serial.print("Error: ");
 //      Serial.println(error[i]);
  //     Serial.print("Revs PM Value: ");
-        //Serial.println(rpmValues[i]);
-      //Serial.print(",");
-      //Serial.print(millis()*0.001);
+       // Serial.print(millis()*0.001);
+       // Serial.print("  ,  ");
+       // Serial.println(rpmValues[i]);   
    //   Serial.print("PWM Value: ");
    //   Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];
@@ -411,21 +411,15 @@ void parseCommand()
     sscanf(&rcv_buffer[1], " %d \r",&rpmNum);
     printDouble(rpmValues[rpmNum],1000000000);
    break;
+  
   case 'k':
   case 'K':
      char  pValue[20];
      char  iValue[20];
      sscanf(&rcv_buffer[1], " %s %s \r",&pValue,&iValue);
-     Serial.println(pValue);
-     Serial.println(iValue);
      char *ptr;
      Kp = strtod(pValue,&ptr);
      Ki = strtod(iValue,&ptr);
-     Serial.println(Kp);
-     Serial.println(Ki);
-     //Ki = iValue.toDouble();
-     //Kp = pValue;
-     //Ki = iValue;
      break;
 
 

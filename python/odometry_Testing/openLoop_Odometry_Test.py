@@ -4,25 +4,21 @@ import xbox
 import time
 import numpy as np
 import libomni
+import os
+
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.4);
 
-#time.sleep(1)
+time.sleep(1)
 
 ser.reset_input_buffer()
 ser.reset_output_buffer()
 #joy = xbox.Joystick()
 
-#MAKE SURE YOU CALL ODEMETRY INIT
-oldEncoder0 = 0
-oldEncoder1 = 0
-oldEncoder2 = 0
-newEncoder0 = 0
-newEncoder1 = 0
-newEncoder2 = 0
-current_x = 0
-current_y = 0
-current_t = 0
+#folder where saving all the data
+save_folder = "Odometry_Test_Data/"
+current_directory = os.getcwd()
+save_directory = os.path.join(current_directory, save_folder)
 
 
 def readEncoder(encoderNum):
@@ -122,120 +118,31 @@ def xyThetaToWheelV(xd,yd,thetad):
 	
 
 	velocityValues(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
-	
 	#motors(100,100,100)
-def initOdemetry():
-	global current_x
-	global current_y
-	global current_t
-	global oldEncoder0
-	global oldEncoder1
-	global oldEncoder2
-	oldEncoder0 = readEncoder(0)
-	oldEncoder1 = readEncoder(1)
-	oldEncoder2 = readEncoder(2)
-	current_x = 0
-	current_y = 0
-	current_t = 0
-	
-def odemetryCalc(xk,yk,thetak,l=0.19):
-	global oldEncoder0
-	global oldEncoder1
-	global oldEncoder2
-	
-	newEncoder0 = readEncoder(0)
-	newEncoder1 = readEncoder(1)
-	newEncoder2 = readEncoder(2)
-	deltaEncoder0 = newEncoder0 - oldEncoder0
-	deltaEncoder1 = newEncoder1 - oldEncoder1
-	deltaEncoder2 = newEncoder2 - oldEncoder2
-	
-	Ds = DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2)
-	
-	D0 = Ds.item(0)
-	D1 = Ds.item(1)
-	D2 = Ds.item(2)
+
+
+def odemetryCalc(xk,yk,thetak,D0,D1,D2,l=0.19):
 
 
 	kinematic_mat = np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3)
 		
 	rotation_mat= np.array([np.cos(thetak),-np.sin(thetak),0,np.sin(thetak),np.cos(thetak),0,0,0,1]).reshape(3,3)
-	
 	#   diffrence in ticks (rpm1)
+	
 	distance_mat = np.array([D1,D0,D2])[:,None]
 	oldPos_mat = np.array([xk,yk,thetak])[:,None]
 	
 	# np.dot explanation https://stackoverflow.com/questions/21562986/numpy-matrix-vector-multiplication
 	kinxrot = np.dot(rotation_mat,kinematic_mat)
 	newPos_mat = oldPos_mat + np.dot(kinxrot,distance_mat)
-
-	oldEncoder0 = newEncoder0
-	oldEncoder1 = newEncoder1
-	oldEncoder2 = newEncoder2
-
 	return  newPos_mat
 
-########################################    Go_To_Goal    ################################################
-def goTogoal(dx,dy,dtheta,cx,cy,ctheta, l = 0.19):
-
-#we need to find newEncoder to get distance travel
-	
-
-#kinematic_mat and rotation_mat	
-	kinematic_mat = np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3)		
-	rotation_mat= np.array([np.cos(thetak),-np.sin(thetak),0,np.sin(thetak),np.cos(thetak),0,0,0,1]).reshape(3,3)
-	
-#inverse_kinematic and inverse_rotation
-	inv_kinematic_mat = np.linalg.inv(kinematic_mat)
-	inv_rotation_mat = np.linalg.inv(rotation_mat)
-
-#inverse kinematic * inverse rotation
-	inv_kinxrot = np.dot(inv_kinematic_mat,inv_rotation_mat) 
-
-#destination: dx, dy, dtheta
-	destination_position_mat = np.array([dx,dy,dtheta])[:,None]
-
-#current position: cx,cy,ctheta
-	current_position_matrix = np.array([cx,cy,ctheta])[:,None]
-	
-#different_position = destination_postion_matrix - current_postion_matrix
-	different_position = np.subtract(destination_position_matrix,current_position_matrix)
-
-#the change in tick to get to the destination: D_destination
-	D_destination = np.dot(inv_kinxrot,different_position).reshape(3,1)
-	D_destination0 = D_destination.item(0)
-	D_destination1 = D_destination.item(1)
-	D_destination2 = D_destination.item(2)
-	return D_destination0, D_destination1, D_destination2
-	
-def delta_destination(D_destination0, D_destination1, D_destination2, r = 0.003, N= 2249):
-	delta_destination0 = (D_destination0*N)/((2*np.pi*r))
-	delta_destination1 = (D_destination1*N)/((2*np.pi*r))
-	delta_destination2 = (D_destination2*N)/((2*np.pi*r))
-	return  np.array([delta_destination0,delta_destination1,delta_destination2])
-
-def newEncoder_destination(delta_destination0, delta_destination1, delta_destination2):	
-	Dd = delta_destination(delta_destination0,deltadestination1,deltadestination2)
-	Dd0 = Dd.item(0)
-	Dd1 = Dd.item(1)
-	Dd2 = Dd.item(2)
-	newEncoder_destination0 = Dd0 + oldEncoder0
-	newEncoder_destination1 = Dd1 + oldEncoder1
-	newEncoder_destination2 = Dd2 + oldEncoder2
-	return np.array(newEncoder_destination0,newEncoder_destination1,newEncoder_destination2)
-	
-	
-	
 
 def DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2, r=0.03, N=2249):
 	D0=(deltaEncoder0/N)*((2*np.pi*r))
 	D1=(deltaEncoder1/N)*((2*np.pi*r))
 	D2=(deltaEncoder2/N)*((2*np.pi*r))
 	return np.array([D0,D1,D2])
-
-#distance formula 
-def distForm(cx,cy,dx,dy):
-	return np.sqrt(((dx-cx)**2)+((dy-cy)**2))
 
 
 
@@ -325,28 +232,46 @@ elif mode == 'g':
 elif mode == 'o':
 	while True:
 		timer = input("Enter time to run: ")
-		x = float(input("enter v_x: "))
-		y = float(input("enter v_y: "))
+		x = float(input("enter x: "))
+		y = float(input("enter y: "))
 		theta = float(input("enter theta: "))
-		
 		start = time.time()
 		xyThetaToWheelV(x,y,theta)
-		
-		#initOdemetry()
-				
-		file = open("data_x_"+str(x)+",y_"+str(y)+",theta_"+str(theta)+",time_"+str(timer)+".txt","w+")
-		
+		oldEncoder0 = readEncoder(0)
+		oldEncoder1 = readEncoder(1)
+		oldEncoder2 = readEncoder(2)
+	
+		old_x = 0
+		old_y = 0
+		old_t = 0
+
+		file = open(save_folder + "data_x_"+str(x)+",y_"+str(y)+",theta_"+str(theta)+",time_"+str(timer)+".txt","w+")
+
 		while True:
-			pose = odemetryCalc(old_x,old_y,old_t)
+			newEncoder0 = readEncoder(0)
+			newEncoder1 = readEncoder(1)
+			newEncoder2 = readEncoder(2)
+			deltaEncoder0 = newEncoder0 - oldEncoder0
+			deltaEncoder1 = newEncoder1 - oldEncoder1
+			deltaEncoder2 = newEncoder2 - oldEncoder2
+			Ds=DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2)
+			D0 = Ds.item(0)
+			D1 = Ds.item(1)
+			D2 = Ds.item(2)
+		
+			pose = odemetryCalc(old_x,old_y,old_t,D0,D1,D2)
 
-			data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+#write data
+			data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0]);	
 			print(data_write)
-			#file.writelines(str(pose[0][0])+" , "+str(pose[1][0])+" , "+str(pose[2][0])+"\n")
-
-			current_x = pose.item(0)
-			current_y = pose.item(1)
-			current_t = pose.item(2)
+			file.writelines(str(pose[0][0])+" , "+str(pose[1][0])+" , "+str(pose[2][0])+"\n")
 			
+			old_x=pose.item(0)
+			old_y=pose.item(1)
+			old_t=pose.item(2)
+			oldEncoder0 = newEncoder0
+			oldEncoder1 = newEncoder1
+			oldEncoder2 = newEncoder2
 			if time.time()-float(start) >= float(timer):
 				xyThetaToWheelV(0,0,0)
 				file.close()
@@ -363,16 +288,6 @@ elif mode == 'p':
 		theta = float(input("enter theta: "))
 		PIValues(p,i)
 		xyThetaToWheelV(x,y,theta)
-		
-elif mode == 'd':
-	while True:
-		print("Enter your destination :) ")
-		dx = float(input("enter x: "))
-		dy = float(input("enter y: "))
-		dtheta = float(input("enter theta: "))
-		
-		encoder_change = newEncoder_destination(delta_destination0, delta_destination1, delta_destination2)
-		print(encoder_change)
 		
 
 
