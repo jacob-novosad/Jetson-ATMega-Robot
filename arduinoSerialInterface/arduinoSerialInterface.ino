@@ -179,9 +179,9 @@ void pi() {
 //      Serial.print("Error: ");
 //      Serial.println(error[i]);
  //     Serial.print("Revs PM Value: ");
-       // Serial.print(millis()*0.001);
-       // Serial.print("  ,  ");
-       // Serial.println(rpmValues[i]);   
+        //Serial.print(millis()*0.001);
+        //Serial.print("  ,  ");
+        //Serial.println(rpmValues[i]);   
    //   Serial.print("PWM Value: ");
    //   Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];

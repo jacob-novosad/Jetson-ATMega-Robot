@@ -13,6 +13,7 @@ class minIMU(LIS3MDL, LSM6DS33):
     GYR_GAIN = 0.035
     ACC_GAIN = 0.122 / 1000.0 * 981.0
     ALPHA = 2.0 / 6.0
+    ALPHA_Accel = 2.0 / 6.0
     
     # Private methods
     def __init__(self, busId = 1):
@@ -122,9 +123,9 @@ class minIMU(LIS3MDL, LSM6DS33):
     def getAccelFil(self):
         """ Returns a vector (list) of accelerometer measurements run through a exponential moving average filter. """
         accels = self.getAccelCal()
-        self.accX = ((accels[0] - self.accX) * self.ALPHA) + self.accX
-        self.accY = ((accels[1] - self.accY) * self.ALPHA) + self.accY
-        self.accZ = ((accels[2] - self.accZ) * self.ALPHA) + self.accZ
+        self.accX = ((accels[0] - self.accX) * self.ALPHA_Accel) + self.accX
+        self.accY = ((accels[1] - self.accY) * self.ALPHA_Accel) + self.accY
+        self.accZ = ((accels[2] - self.accZ) * self.ALPHA_Accel) + self.accZ
         return [self.accX, self.accY, self.accZ]
 
     def getIMUCal(self):

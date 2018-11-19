@@ -174,39 +174,55 @@ def odemetryCalc(xk,yk,thetak,l=0.19):
 	oldEncoder2 = newEncoder2
 
 	return  newPos_mat
+	
+	
+	
+	
+def DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2, r=0.03, N=2249):
+	D0=(deltaEncoder0/N)*((2*np.pi*r))
+	D1=(deltaEncoder1/N)*((2*np.pi*r))
+	D2=(deltaEncoder2/N)*((2*np.pi*r))
+	return np.array([D0,D1,D2])
+	
+	
+# Velocity or TIme has to be 0. it will calculate the value for the one that is set to 0
+def rotate(radians,velocity,timer):
+	if velocity == 0:
+		velocity = radians/timer
+		print("velocity calculated: " +str(velocity))
+		xyThetaToWheelV(0,0,velocity)
+		time.sleep(timer)
+		xyThetaToWheelV(0,0,0)
+		return;
+	else:
+		timer = abs(radians/velocity)
+		print("time calculated: " +str(timer))
+		xyThetaToWheelV(0,0,velocity)
+		time.sleep(timer)
+		xyThetaToWheelV(0,0,0)
 
+def moveX(distance,velocity,timer):
+	if velocity == 0:
+		velocity = distance/timer
+		print("velocity calculated: " +str(velocity))
+		xyThetaToWheelV(velocity,0,0)
+		time.sleep(timer)
+		xyThetaToWheelV(0,0,0)
+		return;
+	else:
+		timer = distance/velocity
+		print("time calculated: " +str(timer))
+		xyThetaToWheelV(velocity,0,0)
+		time.sleep(timer)
+		xyThetaToWheelV(0,0,0)
+		
+	
+#cth - gth = rotation in radians = thetadot
+#
 ########################################    Go_To_Goal    ################################################
-def goTogoal(dx,dy,dtheta,cx,cy,ctheta, l = 0.19):
-
-#we need to find newEncoder to get distance travel
-	
-
-#kinematic_mat and rotation_mat	
-	kinematic_mat = np.array([1/np.sqrt(3),0,-1/np.sqrt(3),-1/3,2/3,-1/3,-1/(3*l),-1/(3*l),-1/(3*l)]).reshape(3,3)		
-	rotation_mat= np.array([np.cos(thetak),-np.sin(thetak),0,np.sin(thetak),np.cos(thetak),0,0,0,1]).reshape(3,3)
-	
-#inverse_kinematic and inverse_rotation
-	inv_kinematic_mat = np.linalg.inv(kinematic_mat)
-	inv_rotation_mat = np.linalg.inv(rotation_mat)
-
-#inverse kinematic * inverse rotation
-	inv_kinxrot = np.dot(inv_kinematic_mat,inv_rotation_mat) 
-
-#destination: dx, dy, dtheta
-	destination_position_mat = np.array([dx,dy,dtheta])[:,None]
-
-#current position: cx,cy,ctheta
-	current_position_matrix = np.array([cx,cy,ctheta])[:,None]
-	
-#different_position = destination_postion_matrix - current_postion_matrix
-	different_position = np.subtract(destination_position_matrix,current_position_matrix)
-
-#the change in tick to get to the destination: D_destination
-	D_destination = np.dot(inv_kinxrot,different_position).reshape(3,1)
-	D_destination0 = D_destination.item(0)
-	D_destination1 = D_destination.item(1)
-	D_destination2 = D_destination.item(2)
-	return D_destination0, D_destination1, D_destination2
+def goToGoal(dx,dy,cx,cy,ctheta):
+	rotate(math.atan2(dy-cy,dx-cy),2,0)
+	moveX(distForm(cx,cy,dx,dy),.5,0)
 	
 def delta_destination(D_destination0, D_destination1, D_destination2, r = 0.003, N= 2249):
 	delta_destination0 = (D_destination0*N)/((2*np.pi*r))
@@ -226,12 +242,6 @@ def newEncoder_destination(delta_destination0, delta_destination1, delta_destina
 	
 	
 	
-
-def DValue(deltaEncoder0,deltaEncoder1,deltaEncoder2, r=0.03, N=2249):
-	D0=(deltaEncoder0/N)*((2*np.pi*r))
-	D1=(deltaEncoder1/N)*((2*np.pi*r))
-	D2=(deltaEncoder2/N)*((2*np.pi*r))
-	return np.array([D0,D1,D2])
 
 #distance formula 
 def distForm(cx,cy,dx,dy):
@@ -337,7 +347,7 @@ elif mode == 'o':
 		file = open("data_x_"+str(x)+",y_"+str(y)+",theta_"+str(theta)+",time_"+str(timer)+".txt","w+")
 		
 		while True:
-			pose = odemetryCalc(old_x,old_y,old_t)
+			pose = odemetryCalc(current_x,current_y,current_t)
 
 			data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
 			print(data_write)
@@ -366,13 +376,13 @@ elif mode == 'p':
 		
 elif mode == 'd':
 	while True:
-		print("Enter your destination :) ")
-		dx = float(input("enter x: "))
-		dy = float(input("enter y: "))
-		dtheta = float(input("enter theta: "))
+		print("Enter your destination (x,y) :) ")
+		dx = float(input("dx: "))
+		dy = float(input("dy: "))
+		goToGoal(dx,dy,0,0,0)
 		
-		encoder_change = newEncoder_destination(delta_destination0, delta_destination1, delta_destination2)
-		print(encoder_change)
+		
+	
 		
 
 

@@ -36,14 +36,18 @@ plt.autoscale(enable=True, axis='x', tight=True)
 plt.xlabel('Time(seconds)')
 plt.ylabel('RPM')
 plt.title(my_txt1)
-plt.savefig(my_txt1+'.png')
+
+#Save image into full size 
+fig = plt.gcf()
+fig.set_size_inches((20, 11), forward=False)
+fig.savefig(my_txt1+'.png', dpi=162)
 
 #will not stop the figure if use this
-#plt.show()
+plt.show()
 #plt.draw()
 
 #the figure will be closed after 3s
-plt.show(block=False)
+#plt.show(block=False)
 plt.draw()
-time.sleep(3)
+#time.sleep(3)
 plt.close()

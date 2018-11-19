@@ -176,25 +176,6 @@ elif mode == 't':
 
 #velocityValues(1800,1800,1800)
 
-############### Contoller demo for testing  ################
-
-elif mode == 'c':
-	joy = xbox.Joystick()
-	theta = 0
-	while True:
-		theta = 0
-		time.sleep(0)
-		if(joy.B()):
-			joy.close()
-			motors(0,0,0)
-			quit()
-		(x,y) = joy.leftStick()
-		(x1,y1) = joy.rightStick()
-		print("x: "+str(y))
-		print("y: "+str(x1))
-	
-		xyThetaToWheelV(y/1.5,-x/1.5,x1*np.pi)
-
 
 ###################### GRAPH  ##############################
 
