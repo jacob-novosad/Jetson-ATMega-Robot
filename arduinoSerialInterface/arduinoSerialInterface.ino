@@ -35,7 +35,7 @@ const int infraredSensorPins[] = {
   0,1,2,3};
 
 double Kp = .99; // 12
-double Ki = .009; // .1
+double Ki = 0.007; // .1
 //double Kd = 0;
 
 double sum[3]        = {0,0,0};
@@ -161,22 +161,23 @@ void pi() {
       //updateRPM();
       timeChange[i] = (millis() - lastTime[i]);
       lastTime[i] = millis();
-
+      
+      
       sum[i] = (sum[i] +(error[i]*(double)timeChange[i]));
 
-      pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]); 
+      pwmValue[i] = (Kp * error[i]) + (Ki * sum[i]); 
 
       if(pwmValue[i] < 0){
         motor(i,pwmValue[i]*-1,0);
-      }
+      } 
       else{
         motor(i,pwmValue[i],1);
       }
 
 
-        Serial.print(millis()*0.001);
-        Serial.print("  ,  ");
-        Serial.println(rpmValues[i]);   
+        //Serial.print(millis()*0.001);
+        //Serial.print("  ,  ");
+        //Serial.println(rpmValues[i]);   
    //   Serial.print("PWM Value: ");
    //   Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];

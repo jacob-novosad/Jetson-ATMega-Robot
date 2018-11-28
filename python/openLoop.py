@@ -107,7 +107,7 @@ def xyThetaToWheelV(xd,yd,thetad):
 	IK_M = np.linalg.inv(FK_M) # Inverse kinematics matrix
  
 	motor_spd_vec = np.dot(IK_M,vel_des)
- 
+	
 	wheel1RPM = motor_spd_vec[0] # motor 2 speed [rpm]
 	wheel0RPM = motor_spd_vec[1] # motor 1 speed [rpm]
 	wheel2RPM = motor_spd_vec[2] # motor 3 speed [rpm]
