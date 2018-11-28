@@ -5,7 +5,6 @@ import numpy as np
 
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.4);
 
-time.sleep(1)
 
 ser.reset_input_buffer()
 ser.reset_output_buffer()
@@ -185,26 +184,29 @@ elif mode == 'g':
 	i = 0	
 
 	while True:
+		timer = input("Enter time to run: ")
 		p = input("enter Kp: ")
 		i = input("enter Ki: ")
+		
 		PIValues(p,i)
 		command = input("Enter Command: ")
 		command = command+'\r'
 		ser.write(command.encode())
 		file = open(save_folder + "data_kp_"+p+",ki_"+i+".txt","w+")		
+		start = time.time()
 		while True:
 			data = [0]
 			if(ser.inWaiting() > 0):				
 				data = (ser.readline().decode("ascii"))
 				print (data)
 				file.writelines(data)
-				count = count + 1
-			if (count > 8000):
-				print('quitting')
-				velocityValues(0,0,0)
+
+			if time.time()-float(start) >= float(timer):
+				xyThetaToWheelV(0,0,0)
 				file.close()
 				break
-
+				
+	
 elif mode == 'o':
 	while True:
 		timer = input("Enter time to run: ")

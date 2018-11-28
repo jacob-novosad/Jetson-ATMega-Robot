@@ -14,7 +14,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 10          //Every # miliseconds we update our rpm of wheels
+#define VELOCITY_TIME 15         //Every # miliseconds we update our rpm of wheels
 
 
 
@@ -34,8 +34,8 @@ const int ultrasonicSensorEchoPins[] = {
 const int infraredSensorPins[] = {
   0,1,2,3};
 
-double Kp = 1; // 12
-double Ki = .007; // .1
+double Kp = .99; // 12
+double Ki = .009; // .1
 //double Kd = 0;
 
 double sum[3]        = {0,0,0};
@@ -122,6 +122,7 @@ void loop() {
   {
     pi();
   }
+  //Serial.println(rpmValues[0]);
 
 }
 
@@ -146,6 +147,7 @@ void updateRPM() {
   }
 }
 
+//                                         PI loop
 void pi() {
 
   //delay(20);
@@ -162,8 +164,6 @@ void pi() {
 
       sum[i] = (sum[i] +(error[i]*(double)timeChange[i]));
 
-      //sum = sum+error;
-      //Serial.println(sum[i]);
       pwmValue[i] = (Kp * error[i]) + (Ki*sum[i]); 
 
       if(pwmValue[i] < 0){
@@ -173,15 +173,10 @@ void pi() {
         motor(i,pwmValue[i],1);
       }
 
-//      
-//      Serial.println("---------------------------");
-//      Serial.println(i);
-//      Serial.print("Error: ");
-//      Serial.println(error[i]);
- //     Serial.print("Revs PM Value: ");
-        //Serial.print(millis()*0.001);
-        //Serial.print("  ,  ");
-        //Serial.println(rpmValues[i]);   
+
+        Serial.print(millis()*0.001);
+        Serial.print("  ,  ");
+        Serial.println(rpmValues[i]);   
    //   Serial.print("PWM Value: ");
    //   Serial.println(pwmValue[i]);
       error[i] = setpoint[i] -rpmValues[i];

@@ -87,9 +87,9 @@ def move(xd,yd,thetad):
 	wheel2RPM = motor_spd_vec[2] # motor 3 speed [rpm]
 
 
-	print("Wheel0 RPM: " +str(wheel0RPM))
-	print("Wheel1 RPM: " +str(wheel1RPM))
-	print("Wheel2 RPM: " +str(wheel2RPM))
+	#print("Wheel0 RPM: " +str(wheel0RPM))
+	#print("Wheel1 RPM: " +str(wheel1RPM))
+	#print("Wheel2 RPM: " +str(wheel2RPM))
 	#wheel0RPM *= 10
 	#wheel1RPM *= 10
 	#wheel2RPM *= 10
@@ -134,60 +134,77 @@ def odemetryCalc(xk,yk,thetak,l=0.19, N=2249, r=0.03):
 	oldEncoder2 = newEncoder2
 
 	return  newPos_mat
+	
 
+
+
+#might not work if negative and velocity is 0
 def rotate(radians,velocity,timer):
+	
 	if velocity == 0:
 		velocity = radians/timer
 		print("velocity calculated: " +str(velocity))
 		move(0,0,velocity)
 		return velocity;
 	else:
-		timer = abs(radians/velocity)
+		if radians <0:
+			velocity = velocity*-1
+			timer = abs(radians/velocity)
 		print("time calculated: " +str(timer))
 		move(0,0,velocity)
 		return timer;
 		
+def moveX(distance,velocity,timer):
+	if velocity == 0:
+		velocity = distance/timer
+		print("velocity calculated: " +str(velocity))
+		move(velocity,0,0)
+		return;
+	else:
+		timer = abs(distance/velocity)
+		print("time calculated: " +str(timer))
+		move(velocity,0,0)
+		return timer
+		
+		
+def distForm(cx,cy,dx,dy):
+	return np.sqrt(((dx-cx)**2)+((dy-cy)**2))
+	
+	
 def currentGlobalFrame(currentLocalFrame):
 
 	currentLocalFrame = (currentLocalFrame-2*np.pi) % (2*np.pi)
 	return currentLocalFrame
 
 while True:
+
+	print("######### Enter your goal (x,y) :) ########## ")
 	dx = float(input("enter d_x: "))
 	dy = float(input("enter d_y: "))
-	
-	pose = odemetryCalc(current_x,current_y,current_t)
-	origin_x = pose.item(0)
-	origin_y = pose.item(1)
-	origin_z = pose.item(2)
-	
-	#print(currentGlobalFrame(dx))
-
 	
 	#rotate to global frame
 	print("current x = "+str(current_x))
 	print("current y = "+str(current_y))
 	
 	#rotationAngle = math.atan2((dy-current_y),(dx-current_x))
-	rotationAngle = math.atan2((dy-origin_y),(dx-origin_x))
-	print("Atan2 rotation = "+str(rotationAngle))
+	atan2 = math.atan2((dy-current_y),(dx-current_x))
+	print("Atan2 rotation = "+str(atan2))
 	
-	rotationAngle = currentGlobalFrame(rotationAngle)
-	print("Global frame of atan2 calculation = "+str(rotationAngle))
-	print("Current theta = "+str(current_t))
 	
-	rotation = (rotationAngle - currentGlobalFrame(current_t))#% (2*np.pi)
+	#atan2 returns a number between 180 to -180. We want to turn this into a global angle (0 - 2pi)
+	atan2Global = currentGlobalFrame(atan2)
+	print("Global frame of atan2 calculation = "+str(atan2Global))
+	print("Current theta = "+str(current_t) + " global = "+ str(currentGlobalFrame(current_t)))
+	
+	rotation = (atan2Global - currentGlobalFrame(current_t)) #% (2*np.pi))
 	print ("rotation in radians from current to destination rotation = "+str(rotation))
 	
 	timer = rotate(rotation,2,0)
-	#move(0,0,0)
 	start = time.time()
-	while True:
-		pose = odemetryCalc(current_x,current_y,current_t)
 
-		#data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
-		#print(data_write)
-			#file.writelines(str(pose[0][0])+" , "+str(pose[1][0])+" , "+str(pose[2][0])+"\n")
+	while True:
+				
+		pose = odemetryCalc(current_x,current_y,current_t)
 
 		current_x = pose.item(0)
 		current_y = pose.item(1)
@@ -195,7 +212,30 @@ while True:
 
 		if time.time()-float(start) >= float(timer):
 			move(0,0,0)
-			print("theta after rotation = "+str(current_t))
-			
 			break
-	#move to global poin
+			
+	
+	print("---------------------------------")
+	distance = distForm(current_x,current_y,dx,dy)
+	print(" distance to travel: "+str(distance))
+	timer = moveX(distance,.4,0)
+	start = time.time()
+	while True:
+		pose = odemetryCalc(current_x,current_y,current_t)
+
+		#data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+		#print(data_write)
+		#file.writelines(str(pose[0][0])+" , "+str(pose[1][0])+" , "+str(pose[2][0])+"\n")
+
+		current_x = pose.item(0)
+		current_y = pose.item(1)
+		current_t = pose.item(2)
+
+		if time.time()-float(start) >= float(timer):
+			data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+			print(data_write)
+			move(0,0,0)
+			break
+		
+				
+
