@@ -34,7 +34,6 @@ const int ultrasonicSensorEchoPins[] = {
 const int infraredSensorPins[] = {
   0,1,2,3};
 
-
 double Kp = 1; 
 double Ki = 0.007; 
 
@@ -137,13 +136,16 @@ void updateRPM() {
     changeInRevolutions = changeInEncoders/2249;
 
     rpmValues[i] = (changeInRevolutions/(changeInTimeSeconds))*60; // *60 to get Revolutions per MINUTE
+       //Serial.print(millis()*0.001);
+       //Serial.print("  ,  "); 
+       //Serial.println(rpmValues[i]);
     
-//    if(rpmValues[i] != 0)
-//     { 
-//       Serial.print(millis()*0.001);
-//       Serial.print("  ,  "); 
-//       Serial.println(rpmValues[i]);
-//     }
+    if(rpmValues[i] != 0)
+     { 
+       Serial.print(millis()*0.001);
+       Serial.print("  ,  "); 
+       Serial.println(rpmValues[i]);
+     }
     //if(changeInEncoders >0)
     //Serial.println(changeInEncoders);
 
@@ -245,6 +247,7 @@ void motor(int motorNumber, int pwm, bool dir)
 {
   //dir = !dir;                              // This is to ensure positive RPM is CCW
   motorDir[motorNumber] = dir;
+  pidSwitch = 0;
   digitalWrite(motorDirPins[motorNumber],dir);
   // could input check here for less than 255
   analogWrite(motorPWMPins[motorNumber], pwm);
