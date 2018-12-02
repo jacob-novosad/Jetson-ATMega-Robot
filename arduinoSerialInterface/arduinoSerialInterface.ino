@@ -137,7 +137,7 @@ void updateRPM() {
     changeInRevolutions = changeInEncoders/2249;
 
     rpmValues[i] = (changeInRevolutions/(changeInTimeSeconds))*60; // *60 to get Revolutions per MINUTE
-    
+//    
 //    if(rpmValues[i] != 0)
 //     { 
 //       Serial.print(millis()*0.001);

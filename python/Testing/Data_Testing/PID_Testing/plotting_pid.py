@@ -47,7 +47,7 @@ plt.title(my_txt1)
 #Save image into full size 
 fig = plt.gcf()
 fig.set_size_inches((20, 11), forward=False)
-fig.savefig(my_txt1+'.png', dpi=162)
+fig.savefig(my_txt1+'.png', dpi=500)
 
 #will not stop the figure if use this
 plt.show()

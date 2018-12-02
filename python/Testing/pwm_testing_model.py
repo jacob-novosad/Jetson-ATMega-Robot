@@ -27,7 +27,8 @@ def readEncoder(encoderNum):
 	
 def PWMValues(motor_num,pwm):
 	ser.reset_input_buffer()
-	ser.write(("m %s %s %s \r" % (motor_num,abs(int(pwm)),int(pwm>=0))).encode())
+	for x in range(3):
+		ser.write(("m %s %s %s \r" % (x,abs(int(pwm)),int(pwm>=0))).encode())
 
 def PIDValues(Kp,Ki,Kd):
 	ser.reset_input_buffer()
@@ -168,7 +169,8 @@ elif mode == 'p':
 		pwm = y
 		PWMValues(motor_num,int(pwm))
 		
-		file = open(save_folder + "Motor: "+str(motor_num)+".txt","a")		
+		#~ file = open(save_folder + "Motor: "+str(motor_num)+".txt","a")		
+		file = open(save_folder + "All Motors: 0,1,2 "+".txt","a")		
 		start = time.time()
 	
 		while time.time()-float(start) <= float(timer):

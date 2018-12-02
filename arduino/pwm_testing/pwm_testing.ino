@@ -14,7 +14,7 @@
 #define INFRARED_SENSOR_1 A1
 #define INFRARED_SENSOR_2 A2
 #define INFRARED_SENSOR_3 A3
-#define VELOCITY_TIME 15         //Every # miliseconds we update our rpm of wheels
+#define VELOCITY_TIME 15 //Every # miliseconds we update our rpm of wheels
 
 
 
@@ -34,6 +34,7 @@ const int ultrasonicSensorEchoPins[] = {
 const int infraredSensorPins[] = {
   0,1,2,3};
 
+double pwm_start = 0;
 double Kp = 1; 
 double Ki = 0.007; 
 
@@ -136,16 +137,23 @@ void updateRPM() {
     changeInRevolutions = changeInEncoders/2249;
 
     rpmValues[i] = (changeInRevolutions/(changeInTimeSeconds))*60; // *60 to get Revolutions per MINUTE
-       //Serial.print(millis()*0.001);
-       //Serial.print("  ,  "); 
-       //Serial.println(rpmValues[i]);
+       
+//       Serial.print(millis()*0.001);
+//       Serial.print("  ,  "); 
+//       Serial.println(rpmValues[i]);
     
     if(rpmValues[i] != 0)
+//    if(pwm_start !=0 )
      { 
        Serial.print(millis()*0.001);
        Serial.print("  ,  "); 
-       Serial.println(rpmValues[i]);
+       Serial.print(abs(rpmValues[0]));
+       Serial.print("  ,  ");
+       Serial.print(abs(rpmValues[1]));
+       Serial.print("  ,  ");
+       Serial.println(abs(rpmValues[2]));
      }
+
     //if(changeInEncoders >0)
     //Serial.println(changeInEncoders);
 
@@ -251,16 +259,11 @@ void motor(int motorNumber, int pwm, bool dir)
   digitalWrite(motorDirPins[motorNumber],dir);
   // could input check here for less than 255
   analogWrite(motorPWMPins[motorNumber], pwm);
-  //  Serial.print("Motor: ");
-  //  Serial.print(motorNumber);
-  //  Serial.print(" Speed: ");
-  //  Serial.print(pwm);
+
 //    for( int i=0; i<3;i++)
 //  {
 //      Serial.println(rpmValues[i]);
 //  }   
-  //  Serial.print(" Direction: ");
-  //  Serial.println(dir);
 
 }
 
@@ -326,6 +329,7 @@ void parseCommand()
 
     sscanf(&rcv_buffer[1], " %d %d %d \r",&motorNumber, &motorPWM, &motorDirection);
     motor(motorNumber,motorPWM,motorDirection);
+    pwm_start = 1;
     break;
   
   case 'u':

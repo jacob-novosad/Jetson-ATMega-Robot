@@ -6,8 +6,6 @@ import numpy as np
 #sets up serial connection to arduino atMega
 ser = serial.Serial('/dev/ttyACM0',115200, timeout=.4);
 
-
-
 #clear buffers just incase garbage inside
 ser.reset_input_buffer()
 ser.reset_output_buffer()
@@ -27,6 +25,10 @@ current_x = 0
 current_y = 0
 current_theta = 0
 
+#PID goToGoal
+kp = 1.2
+ki = 0
+kd = 0
 
 # This functions sends  pwm signals to the motor and reverses the direction if given negative
 # Example motor(255,0,0) would turn motor 0 on all the away and 1,2 off
@@ -71,6 +73,10 @@ def enablePID(pidValue):
 	pid = pidValue
 	ser.write(("p %d \r" % (pid)).encode())
 
+####################################################################################################################
+#This specific version of move will not allow RPM to go over a certain value, if you give it a command that causes
+#RPM to go over it will decrease all motors by a ratio so that it fits in the bounds of motor RPM
+####################################################################################################################
 def move(xd,yd,thetad):
 
 	r = 0.03 # radius of each wheel [m]
@@ -91,36 +97,19 @@ def move(xd,yd,thetad):
 	wheel1RPM = motor_spd_vec[0] # motor 2 speed [rpm]
 	wheel0RPM = motor_spd_vec[1] # motor 1 speed [rpm]
 	wheel2RPM = motor_spd_vec[2] # motor 3 speed [rpm]
-
-	if (abs(wheel1RPM) > 200 or abs(wheel0RPM) > 200 or abs(wheel2RPM) > 200):
-		if  (abs(wheel0RPM) > abs(wheel1RPM) and abs(wheel0RPM) > abs(wheel2RPM)):
-			ratio = abs(wheel0RPM)/200
-			wheel0RPM = wheel0RPM/ratio
-			wheel1RPM = wheel1RPM/ratio
-			wheel2RPM = wheel2RPM/ratio
-		elif (abs(wheel1RPM) > abs(wheel0RPM) and abs(wheel1RPM) > abs(wheel2RPM)):
-			ratio = abs(wheel1RPM)/200
-			wheel0RPM = wheel0RPM/ratio
-			wheel1RPM = wheel1RPM/ratio
-			wheel2RPM = wheel2RPM/ratio
-		else:
-			ratio = abs(wheel2RPM)/200
-			wheel0RPM = wheel0RPM/ratio
-			wheel1RPM = wheel1RPM/ratio
-			wheel2RPM = wheel2RPM/ratio
-			
+	
+	maxAllowedSpeed = 150
+	if (abs(wheel1RPM) > maxAllowedSpeed or abs(wheel0RPM) > maxAllowedSpeed or abs(wheel2RPM) > maxAllowedSpeed):
+		maxRPM = max(abs(motor_spd_vec))
+		ratio = abs(maxRPM)/maxAllowedSpeed
+		wheel0RPM = wheel0RPM/ratio
+		wheel1RPM = wheel1RPM/ratio
+		wheel2RPM = wheel2RPM/ratio
 
 	print("Wheel0 RPM: " +str(wheel0RPM))
 	print("Wheel1 RPM: " +str(wheel1RPM))
 	print("Wheel2 RPM: " +str(wheel2RPM))
-	#wheel0RPM *= 10
-	#wheel1RPM *= 10
-	#wheel2RPM *= 10
-	
-
 	motorVelocity(int(wheel0RPM),int(wheel1RPM),int(wheel2RPM))
-
-
 
 def odemetryCalc(xk,yk,thetak,l=0.19, N=2249, r=0.03):
 	global oldEncoder0
@@ -170,7 +159,7 @@ def initOdometry():
 	oldEncoder2 = encoder(2)
 	
 
-def goToGoal(xc,yc,thetac,dx,dy,dtheta):
+def goToGoal(dx,dy,dtheta):
 	global current_x
 	global current_y
 	global current_theta
@@ -219,31 +208,99 @@ def goToGoal(xc,yc,thetac,dx,dy,dtheta):
 			break
 
 	
-#def goToGoalTimed(
-#def goToGoalFile(
-def moveX(distance,velocity,timer):
-	if velocity == 0:
-		velocity = distance/timer
-		print("velocity calculated: " +str(velocity))
-		move(velocity,0,0)
-		return;
-	else:
-		timer = abs(distance/velocity)
-		print("time calculated: " +str(timer))
-		move(velocity,0,0)
-		return timer
+def goToGoalTimed(xd,yd,thetad,duration):
+	global current_x
+	global current_y
+	global current_theta
+	dt = 0.1
+	xc = current_x
+	yc = current_y
+	thetac = current_theta
+	phi = math.atan2((yd-yc),(xd-xc))
+	print(phi)
+	print(thetac)
+	
+	while abs(thetac - phi) > 0.1:
+		
+		xc = current_x
+		yc = current_y
+		thetac = current_theta
+		phi = math.atan2((yd-yc),(xd-xc))
+		vel_global = np.array([0,0,2*(phi-thetac)])[:,None]
+		inv_rotation_mat= np.array([np.cos(thetac), np.sin(thetac), 0, -np.sin(thetac), np.cos(thetac), 0, 0, 0, 1]).reshape(3,3)
+		vel_local = np.dot(inv_rotation_mat, vel_global)
+		
+		vl_x = vel_local[0]
+		vl_y = vel_local[1]
+		vl_theta = vel_local[2]
+		
+		move(vl_x,vl_y,vl_theta)
+		
+		pose = odemetryCalc(current_x,current_y,current_theta)
+		current_x = pose.item(0)
+		current_y = pose.item(1)
+		current_theta = pose.item(2)		
+		time.sleep(dt)
+		data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+		print(data_write)
+	
+	#~ start = time.time()
+	
+	#~ while time.time()-float(start) <= float(duration):
+		
+		#~ xc = current_x
+		#~ yc = current_y
+		#~ thetac = current_theta
+
+
+		#~ inv_rotation_mat= np.array([np.cos(thetac), np.sin(thetac), 0, -np.sin(thetac), np.cos(thetac), 0, 0, 0, 1]).reshape(3,3)
+		#~ d = np.sqrt(((xd-xc)**2)+((yd-yc)**2))
+
+		#~ phi = math.atan2((yd-yc),(xd-xc))
+		#~ print(thetac-phi)
+		#~ vel_global = np.array([0,0,thetac-phi])[:,None]
 		
 		
 
-#initOdometry()
-while True: 
-	print("######### Enter your goal (x,y) :) ########## ")
-	xd = float(input("enter x desired: "))
-	yd = float(input("enter y desired: "))
-	thetad = float(input("enter theta desired: "))	
+		#~ vel_global = np.array([ d*np.cos(phi), d*np.sin(phi), 0])[:,None]
+			
+		#~ vel_local = np.dot(inv_rotation_mat, vel_global)
+		
+		#~ time_left = duration - (time.time() - start) #duration - time elapsed = time left
+		#~ vl_x = vel_local[0] / time_left
+		#~ vl_y = vel_local[1] / time_left 
+		#~ vl_theta = vel_local[2] / time_left
+		
+		
+		#~ move(vl_x,vl_y,vl_theta)
+		#~ pose = odemetryCalc(current_x,current_y,current_theta)
+		#~ current_x = pose.item(0)
+		#~ current_y = pose.item(1)
+		#~ current_theta = pose.item(2)		
+		#~ time.sleep(dt)
+		#~ data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+		#~ print(data_write)
 
-	goToGoal(current_x,current_y,current_theta,xd,yd,thetad)
+	#~ move(0,0,0)
 
+	#data_write = "x: "+str(pose[0][0])+"  y: "+str(pose[1][0])+"  theta: "+str(pose[2][0])
+	#print(data_write)
+
+
+
+	
+
+#~ initOdometry()
+#~ wehile True: 
+print("######### Enter your goal (x,y) :) ########## ")
+xd = float(input("enter x desired: "))
+yd = float(input("enter y desired: "))
+thetad = float(input("enter theta desired: "))	
+duration = float(input("enter duration desired: "))	
+
+	#goToGoal(current_x,current_y,current_theta,xd,yd,thetad)
+goToGoalTimed(xd,yd,thetad,duration)
+	#goToGoalFile("test")
 
 		#print("current x = "+str(current_x))
 		#print("current y = "+str(current_y))
